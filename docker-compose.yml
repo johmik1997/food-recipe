@@ -23,6 +23,9 @@ services:
     environment:
       JWT_SECRET: "9a4049355a147359591e126f535fe1146eb3de0bb00c21532b79032efdc39b6c84d260618b723126afc587d8d5087ba0a9b91817b48fb72f45effbbd86a2f2186dbd6948c06be8b579e440a8ed8f19e59b48c4f785f49d2f6ff86f165d052fea0ea2c416cba31da1dec6c1ca547ec2606378bbb666dc5d82e921d458af823acfdb36c3fecbb7ba14add576ad88eefba0b31f3606f8fc92fd52cf144a3f4891b5951822e49a0f966799fadab1bed093f0067d3c33f2660b42fcb41cb6b3e5e2da71ef613e8f117454def63f20e2e8e975677fa10bc75cd76626696ff6614ea1d8c7c866592e4118d439b3180bc1f0546aec310efd5e8ed2d18d994502d9d5c7ed"
       DB_CONNECTION: "postgres://postgres:postgrespassword@postgres:5432/postgres?sslmode=disable"
+      CLOUDINARY_CLOUD_NAME: "dc9or5rjo"
+      CLOUDINARY_API_KEY: "433214776171187"
+      CLOUDINARY_API_SECRET: "ThV_N-ztM-fPMvNYw_OxtLdOIag"
     depends_on:
       postgres:
         condition: service_healthy
