@@ -16,7 +16,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
-func uploadRecipeImageHandler(w http.ResponseWriter, r *http.Request) {
+func UploadRecipeImageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var payload models.UploadRecipeImageRequest

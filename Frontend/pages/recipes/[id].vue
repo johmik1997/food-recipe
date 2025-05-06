@@ -54,40 +54,41 @@
         </div>
   
         <!-- Ingredients -->
-        <div class="bg-gray-50 p-6 rounded-lg">
-          <h2 class="text-2xl font-bold mb-4 text-gray-900">Ingredients</h2>
-          <ul class="space-y-2">
-            <li v-for="(ingredient, index) in recipe.ingredients" :key="index" class="flex items-start">
-              <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-2"></span>
-              <span>
-                <span v-if="ingredient.quantity">{{ ingredient.quantity }}</span>
-                <span v-if="ingredient.unit" class="ml-1">{{ ingredient.unit }}</span>
-                <span class="ml-2 font-medium">{{ ingredient.name }}</span>
-              </span>
-            </li>
-          </ul>
-        </div>
-  
-        <!-- Steps -->
-        <div class="space-y-6">
-          <h2 class="text-2xl font-bold mb-4 text-gray-900">Instructions</h2>
-          <div v-for="step in recipe.steps" :key="step.step_number" class="flex">
-            <div class="flex-shrink-0 mr-4">
-              <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white font-bold">
-                {{ step.step_number }}
-              </span>
-            </div>
-            <div class="prose max-w-none flex-1">
-              <p>{{ step.instruction }}</p>
-              <img 
-                v-if="step.image_url" 
-                :src="step.image_url" 
-                :alt="`Step ${step.step_number}`"
-                class="mt-3 rounded-lg shadow-md max-w-full"
-              />
-            </div>
-          </div>
-        </div>
+        <!-- Ingredients -->
+<div class="bg-gray-50 p-6 rounded-lg">
+  <h2 class="text-2xl font-bold mb-4 text-gray-900">Ingredients</h2>
+  <ul class="space-y-2">
+    <li v-for="(ingredient, index) in recipe.recipe_ingredients" :key="index" class="flex items-start">
+      <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-2"></span>
+      <span>
+        <span v-if="ingredient.quantity">{{ ingredient.quantity }}</span>
+        <span v-if="ingredient.unit" class="ml-1">{{ ingredient.unit }}</span>
+        <span class="ml-2 font-medium">{{ ingredient.name }}</span>
+      </span>
+    </li>
+  </ul>
+</div>
+
+<!-- Steps -->
+<div class="space-y-6">
+  <h2 class="text-2xl font-bold mb-4 text-gray-900">Instructions</h2>
+  <div v-for="step in recipe.recipe_steps" :key="step.step_number" class="flex">
+    <div class="flex-shrink-0 mr-4">
+      <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white font-bold">
+        {{ step.step_number }}
+      </span>
+    </div>
+    <div class="prose max-w-none flex-1">
+      <p>{{ step.instruction }}</p>
+      <img 
+        v-if="step.image_url" 
+        :src="step.image_url" 
+        :alt="`Step ${step.step_number}`"
+        class="mt-3 rounded-lg shadow-md max-w-full"
+      />
+    </div>
+  </div>
+</div>
   
         <!-- Additional images -->
         <div v-if="recipe.images && recipe.images.length > 0" class="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -109,7 +110,7 @@
   
   <script setup>
   import { useRoute } from 'vue-router'
-  import { ClockIcon, FireIcon, UsersIcon } from '@heroicons/vue/24/outline'
+  import { ClockIcon, FireIcon, UsersIcon } from '@heroicons/vue/outline'
   import gql from 'graphql-tag'
 import { useQuery } from '@vue/apollo-composable'
   

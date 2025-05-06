@@ -1,68 +1,86 @@
 <!-- ~/pages/recipes/index.vue -->
 <template>
-  <div class="py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Recipes</h1>
-        <NuxtLink 
-          to="/recipes/create" 
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-        >
-          Add Recipe
-        </NuxtLink>
-      </div>
+  <div class="bg-white shadow-sm">
+    <Navbar />  
+  <section class="relative bg-gray-900 text-white overflow-hidden">
+    <!-- Background Image with Overlay -->
+    <div class="absolute inset-0 z-0">
+      <img 
+        src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1480&q=80" 
+        alt="Delicious food assortment"
+        class="w-full h-full object-cover opacity-50"
+      />
+    </div>
 
-      <div v-if="pending" class="flex justify-center py-12">
-        <Spinner class="h-8 w-8 text-primary-500" />
-      </div>
+    <div class="relative z-10 max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <!-- Main Headline -->
+        <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
+          <span class="block">Discover & Share</span>
+          <span class="block text-green-400">Delicious Recipes</span>
+        </h1>
 
-      <div v-else-if="error" class="text-center py-12 text-red-500">
-        Error loading recipes: {{ error.message }}
-      </div>
+        <!-- Subtitle -->
+        <p class="mt-6 max-w-lg mx-auto text-xl text-gray-300">
+          Join our community of food lovers. Find inspiration or contribute your own culinary creations.
+        </p>
 
-      <div v-else-if="recipes.length === 0" class="text-center py-12">
-        <div class="max-w-md mx-auto">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          <h3 class="mt-2 text-lg font-medium text-gray-900">No recipes yet</h3>
-          <p class="mt-1 text-sm text-gray-500">Get started by creating your first recipe.</p>
+        <!-- Conditional CTAs -->
+        <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+          <NuxtLink 
+            to="/recipes" 
+            class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 md:py-4 md:text-lg md:px-10 transition-colors"
+          >
+            Browse Recipes
+          </NuxtLink>
+
+          <NuxtLink 
+            v-if="!isAuthenticated"
+            to="/signup" 
+            class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-100 md:py-4 md:text-lg md:px-10 transition-colors"
+          >
+            Share Your Recipe
+          </NuxtLink>
+
+          <NuxtLink 
+            v-else
+            to="/dashboard/new-recipe" 
+            class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-100 md:py-4 md:text-lg md:px-10 transition-colors"
+          >
+            Create New Recipe
+          </NuxtLink>
+        </div>
+
+        <!-- Stats Bar (Optional) -->
+        <div class="mt-16 grid grid-cols-3 gap-8 text-center">
+          <div>
+            <p class="text-3xl font-bold text-green-400">1,000+</p>
+            <p class="mt-2 text-gray-300">Recipes</p>
+          </div>
+          <div>
+            <p class="text-3xl font-bold text-green-400">500+</p>
+            <p class="mt-2 text-gray-300">Food Creators</p>
+          </div>
+          <div>
+            <p class="text-3xl font-bold text-green-400">10K+</p>
+            <p class="mt-2 text-gray-300">Meals Shared</p>
+          </div>
         </div>
       </div>
-
-      <div v-else class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <RecipeCard 
-          v-for="recipe in recipes" 
-          :key="recipe.id" 
-          :recipe="recipe" 
-          class="hover:shadow-lg transition-shadow duration-300"
-        />
-      </div>
     </div>
+
+    <!-- Scrolling Indicator (Optional) -->
+    <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-10">
+      <svg class="w-8 h-8 text-white animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+      </svg>
+    </div>
+  </section>
   </div>
+  <Footer />
 </template>
 
 <script setup>
-import { useQuery } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
-
-const GET_RECIPES = gql`
-  query GetRecipes {
-    recipes(distinct_on: title) {
-      id
-      title
-      description
-      prep_time
-      cook_time
-      total_time
-      servings
-      featured_image_url
-      created_at
-    }
-  }
-`
-
-const { result, loading: pending, error } = useQuery(GET_RECIPES)
-
-const recipes = computed(() => result.value?.recipes || [])
+// Replace with your actual auth check
+const isAuthenticated = ref(false)
 </script>
