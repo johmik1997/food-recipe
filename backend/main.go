@@ -11,6 +11,7 @@ func main() {
 	http.HandleFunc("/register", handlers.RegisterHandler)
 	http.HandleFunc("/login", handlers.LoginHandler)
 	http.HandleFunc("/upload-recipe-image", handlers.UploadRecipeImageHandler)
+	http.HandleFunc("/upload-profile-image", handlers.UploadProfileImageHandler)
 	http.HandleFunc("/create-recipe", handlers.CreateRecipeHandler)	
 	// Start the server
 	log.Println("Server listening on port 3001")

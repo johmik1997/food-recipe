@@ -12,6 +12,7 @@
             <label class="block font-medium text-gray-700 mb-1">Title*</label>
             <input 
               v-bind="field" 
+              v-model="form.title"
               type="text" 
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
               placeholder="e.g. Grandma's Chocolate Chip Cookies"
@@ -23,6 +24,7 @@
             <label class="block font-medium text-gray-700 mb-1">Description</label>
             <textarea 
               v-bind="field" 
+              v-model="form.description"
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
               rows="3"
               placeholder="Tell us about your recipe..."
@@ -38,7 +40,8 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Prep Time -->
             <div class="space-y-1">
-              <Field name="prep_time" v-slot="{ field, errors, meta }">
+              <Field name="prep_time" v-slot="{ field, errors, meta }"
+              v-model="form.prep_time">
                 <label class="block text-sm font-medium text-gray-700">
                   Prep Time (minutes)
                   <span class="text-gray-400 ml-1">optional</span>
@@ -67,7 +70,8 @@
 
             <!-- Cook Time -->
             <div class="space-y-1">
-              <Field name="cook_time" v-slot="{ field, errors, meta }">
+              <Field name="cook_time" v-slot="{ field, errors, meta }"
+              v-model="form.cook_time">
                 <label class="block text-sm font-medium text-gray-700">
                   Cook Time (minutes)
                   <span class="text-gray-400 ml-1">optional</span>
@@ -96,7 +100,8 @@
 
             <!-- Servings -->
             <div class="space-y-1">
-              <Field name="servings" v-slot="{ field, errors, meta }">
+              <Field name="servings" v-slot="{ field, errors, meta }"
+              v-model="form.servings">
                 <label class="block text-sm font-medium text-gray-700">
                   Servings
                   <span class="text-red-500">*</span>
@@ -128,7 +133,8 @@
 
         <!-- Category Section -->
         <div class="border-b pb-6">
-          <Field name="category_id" v-slot="{ field, errorMessage }">
+          <Field name="category_id" v-slot="{ field, errorMessage }"
+          >
             <label class="block font-medium text-gray-700 mb-1">Category*</label>
             <select 
               v-bind="field" 

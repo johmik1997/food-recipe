@@ -83,4 +83,18 @@
 <script setup>
 // Replace with your actual auth check
 const isAuthenticated = ref(false)
+const userId = ref(null)
+onMounted(() => {
+  const userStr = localStorage.getItem("user")
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr)
+      userId.value = user.id
+      isAuthenticated.value = true
+    } catch (e) {
+      console.error("Failed to parse user data", e)
+    }
+  }
+})
+
 </script>

@@ -45,7 +45,7 @@
         <template v-if="isAuthenticated">
           <!-- My Recipes Link -->
           <NuxtLink 
-            to="/dashboard/my-recipes" 
+            to="/dashboard/my-recipe" 
             class="hover:text-green-600 transition-colors hidden md:block"
             active-class="text-green-600 font-medium"
           >
@@ -76,7 +76,7 @@
                 alt="User Avatar"
                 class="w-8 h-8 rounded-full"
               />
-              <span class="text-sm font-medium">Hi, User</span>
+              <span class="text-sm font-medium">Hi,{{ userName }}</span>
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 class="h-4 w-4 transition-transform duration-200"
@@ -108,6 +108,13 @@
                 @click="dropdownOpen = false"
               >
                 Purchased Recipes
+              </NuxtLink>
+              <NuxtLink 
+                to="/dashboard/updateProfile" 
+                class="block px-4 py-2 hover:bg-gray-50 text-gray-700"
+                @click="dropdownOpen = false"
+              >
+               update profile
               </NuxtLink>
               <div class="border-t border-gray-200 my-1"></div>
               <button 
@@ -149,7 +156,7 @@
         <div class="space-y-4">
           <template v-if="isAuthenticated">
             <NuxtLink 
-              to="/dashboard/my-recipes" 
+              to="/dashboard/my-recipe" 
               class="block py-3 text-lg border-b border-gray-100"
               @click="mobileMenuOpen = false"
             >
@@ -203,45 +210,90 @@
       </div>
     </nav>
   </template>
-  
-  <script setup>
-  const isAuthenticated = ref(false) // Replace with your actual auth state
-  const dropdownOpen = ref(false)
-  const mobileMenuOpen = ref(false)
-  
-  const toggleDropdown = () => {
-    dropdownOpen.value = !dropdownOpen.value
-  }
-  
-  const toggleMobileMenu = () => {
-    mobileMenuOpen.value = !mobileMenuOpen.value
-    dropdownOpen.value = false
-  }
-  const userId = ref(null)
 
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+
+// Auth state
+const isAuthenticated = ref(false)
+const userId = ref<string | null>(null)
+const userName = ref<string>('User')
+
+// UI states
+const dropdownOpen = ref(false)
+const mobileMenuOpen = ref(false)
+
+// GraphQL query
+const { result } = useQuery(gql`
+  query getUserName($userId: uuid!) {
+    users_by_pk(id: $userId) {
+      name
+    }
+  }
+`, 
+{ userId },
+() => ({
+  enabled: !!userId.value
+}))
+
+// Watch for user data changes
+watch(result, (newResult) => {
+  if (newResult?.users_by_pk?.name) {
+    userName.value = newResult.users_by_pk.name
+  }
+})
+
+// Initialize auth state
 onMounted(() => {
   const userStr = localStorage.getItem("user")
   if (userStr) {
-    const user = JSON.parse(userStr)
-    userId.value = user.id
+    try {
+      const user = JSON.parse(userStr)
+      userId.value = user.id
+      isAuthenticated.value = true
+    } catch (e) {
+      console.error("Failed to parse user data", e)
+    }
   }
 })
-if (userId.value) {
-    isAuthenticated.value = true
-    } else {
-    isAuthenticated.value = false
-    }
-  const logout = () => {
-    // Implement your logout logic
-    isAuthenticated.value = false
-    dropdownOpen.value = false
-    mobileMenuOpen.value = false
-  }
-  
-  // Close dropdown when clicking outside
 
-  </script>
-  
+// Methods
+const toggleDropdown = () => {
+  dropdownOpen.value = !dropdownOpen.value
+}
+
+const toggleMobileMenu = () => {
+  mobileMenuOpen.value = !mobileMenuOpen.value
+  dropdownOpen.value = false
+}
+
+const logout = () => {
+  localStorage.removeItem("user")
+  isAuthenticated.value = false
+  dropdownOpen.value = false
+  mobileMenuOpen.value = false
+  navigateTo('/login')
+}
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+  if (dropdownOpen.value) {
+    dropdownOpen.value = false
+  }
+}
+
+// Set up click outside listener
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+</script>
+
   <style scoped>
  
   /* Transition for dropdown */
