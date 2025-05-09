@@ -72,7 +72,7 @@
           <div class="relative hidden md:block" @click.stop="toggleDropdown">
             <div class="flex items-center gap-2 cursor-pointer">
               <img
-                src="https://i.pravatar.cc/32"
+               :src="userAvatar || '/default-avatar.png'"
                 alt="User Avatar"
                 class="w-8 h-8 rounded-full"
               />
@@ -220,6 +220,7 @@ import gql from 'graphql-tag'
 const isAuthenticated = ref(false)
 const userId = ref<string | null>(null)
 const userName = ref<string>('User')
+const userAvatar = ref<string>('')
 
 // UI states
 const dropdownOpen = ref(false)
@@ -230,6 +231,7 @@ const { result } = useQuery(gql`
   query getUserName($userId: uuid!) {
     users_by_pk(id: $userId) {
       name
+      avatar_image_url
     }
   }
 `, 
@@ -242,9 +244,10 @@ const { result } = useQuery(gql`
 watch(result, (newResult) => {
   if (newResult?.users_by_pk?.name) {
     userName.value = newResult.users_by_pk.name
+    userAvatar.value = newResult.users_by_pk.avatar_image_url || ''
+
   }
 })
-
 // Initialize auth state
 onMounted(() => {
   const userStr = localStorage.getItem("user")

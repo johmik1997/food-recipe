@@ -221,6 +221,7 @@ const SEARCHABLE_RECIPES = gql`
       created_at
       user {
         name
+        avatar_image_url
       }
       recipe_ingredients {
           name
