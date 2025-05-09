@@ -11,10 +11,28 @@ type UploadRecipeImageRequest struct {
 	Input UploadInput `json:"input"`
 }
 
+type UploadProfileImageInput struct {
+	UserID    string `json:"userId"`
+	Base64Str string `json:"base64str"`
+	Filename  string `json:"filename"`
+}
+
+type UploadProfileImageResponse struct {
+	Success        bool   `json:"success"`
+	Message       string `json:"message"`
+	AvatarImageURL string `json:"avatar_image_url"`
+}
+
+
 type UploadResponse struct {
 	Success  bool   `json:"success"`
 	Message  string `json:"message"`
 	ImageURL string `json:"image_url,omitempty"`
+}
+type UploadprofileResponse struct {
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	AvaterImageURL string `json:"avatar_image_url,omitempty"`
 }
 type LoginInput struct {
 	Email    string `json:"email"`

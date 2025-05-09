@@ -4,7 +4,7 @@
       <div class="flex items-center gap-6">
         <NuxtLink to="/" class="text-xl font-bold text-green-600 flex items-center gap-2">
           <span>🍲</span>
-          <span>FoodShare</span>
+          <span>Kushna</span>
         </NuxtLink>
         
         <NuxtLink 
