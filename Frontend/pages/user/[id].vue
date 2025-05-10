@@ -52,7 +52,8 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-
+import gql from 'graphql-tag'
+import { useQuery } from '@vue/apollo-composable'
 const route = useRoute()
 const userId = route.params.id // Changed to use 'id' instead of 'userId'
 

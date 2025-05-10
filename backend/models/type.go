@@ -19,10 +19,9 @@ type UploadProfileImageInput struct {
 
 type UploadProfileImageResponse struct {
 	Success        bool   `json:"success"`
-	Message       string `json:"message"`
+	Message        string `json:"message"`
 	AvatarImageURL string `json:"avatar_image_url"`
 }
-
 
 type UploadResponse struct {
 	Success  bool   `json:"success"`

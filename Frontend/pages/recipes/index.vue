@@ -196,88 +196,214 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { ref, computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 
-// Search and filter states
-const searchQuery = ref('')
-const prepTimeFilter = ref('')
-const ingredientFilter = ref('')
+export default {
+  setup() {
+    // Search and filter states
+    const searchQuery = ref('')
+    const prepTimeFilter = ref('')
+    const ingredientFilter = ref('')
+    const currentPage = ref(1)
+    const itemsPerPage = ref(9)
 
-// GraphQL query
-const SEARCHABLE_RECIPES = gql`
-  query SearchableRecipes {
-    recipes {
+    // GraphQL query
+    const SEARCHABLE_RECIPES = gql`
+      query SearchableRecipes($userId: uuid) {
+  recipes {
+    id
+    title
+    description
+    prep_time
+    cook_time
+    total_time
+    servings
+    featured_image_url
+    created_at
+    user_bookmarks(where: {user_id: {_eq: $userId}}) {
       id
-      title
-      description
-      prep_time
-      cook_time
-      total_time
-      servings
-      featured_image_url
-      created_at
-      user {
-        name
-        avatar_image_url
+    }
+    user_bookmarks_aggregate(where: {user_id: {_eq: $userId}}) {
+      aggregate {
+        count(columns: created_at)
       }
-      recipe_ingredients {
-          name
+    }
+    user_likes(where: {user_id: {_eq: $userId}}) {
+      id
+    }
+    user_likes_aggregate {
+      aggregate {
+        count
       }
     }
   }
-`
+}
 
-
-const { result, loading: pending, error, refetch } = useQuery(SEARCHABLE_RECIPES)
-
-// Raw recipes data
-const recipes = computed(() => result.value?.recipes || [])
-
-// Filtered recipes
-const filteredRecipes = computed(() => {
-  return recipes.value.filter(recipe => {
-    // Search filter
-    const matchesSearch = searchQuery.value === '' || 
-                         recipe.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-                         recipe.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-    
-    // Preparation time filter
-    const prepTime = parseInt(recipe.prep_time) || 0
-    let matchesPrepTime = true
-    if (prepTimeFilter.value) {
-      const filterTime = parseInt(prepTimeFilter.value)
-      matchesPrepTime = filterTime === 121 ? prepTime > 120 : prepTime <= filterTime
+    `
+    const userId=ref("")
+onMounted(() => {
+  const userStr = localStorage.getItem("user");
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      userId.value = user.id;
+      if (!userId.value) {
+        errorMessage.value = "User session error. Please log in again.";
+      }
+    } catch (error) {
+      errorMessage.value = "Failed to parse user session. Please log in again.";
     }
-    
-    // Ingredients filter
-    let matchesIngredients = true
-    if (ingredientFilter.value) {
-      const searchTerms = ingredientFilter.value.toLowerCase().split(',').map(term => term.trim())
-      const recipeIngredients = recipe.recipe_ingredients?.map(ri => ri?.name?.toLowerCase()) || []
+  } else {
+    errorMessage.value = "No user session found. Please log in.";
+  }
+});
+
+
+    // Apollo query
+    const { result, loading: pending, error, refetch } = useQuery(
+      SEARCHABLE_RECIPES,
+      () => ({
+        userId: userId.value
+      }),
+      () => ({
+        enabled: !!userId.value
+      })
+    )
+     console.log(result)
+    // Raw recipes data with normalized fields
+ const recipes = computed(() => {
+  if (!result.value?.recipes) return []
+  
+  return result.value.recipes.map(recipe => {
+    return {
+      ...recipe,
+      // Normalize likes data
+      likes_count: recipe.user_likes_aggregate?.aggregate?.count || 0,
+      is_liked: recipe.user_likes?.length > 0,
       
-      // Filter out any undefined/null values
-      const validIngredients = recipeIngredients.filter(Boolean)
+      // Normalize bookmarks data
+      bookmarks_count: recipe.user_bookmarks_aggregate?.aggregate?.count || 0,
+      is_bookmarked: recipe.user_bookmarks?.length > 0,
       
-      matchesIngredients = searchTerms.every(term => 
-        validIngredients.some(ingredient => ingredient.includes(term)))
+      // Keep other fields
+      user: recipe.user,
+      recipe_ingredients: recipe.recipe_ingredients || []
     }
-    
-    return matchesSearch && matchesPrepTime && matchesIngredients
   })
 })
+    // Filtered recipes
+    const filteredRecipes = computed(() => {
+      return recipes.value.filter(recipe => {
+        // Search filter
+        const matchesSearch = searchQuery.value === '' || 
+                            recipe.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
+                            recipe.description.toLowerCase().includes(searchQuery.value.toLowerCase())
+        
+        // Preparation time filter
+        const prepTime = parseInt(recipe.prep_time) || 0
+        let matchesPrepTime = true
+        if (prepTimeFilter.value) {
+          const filterTime = parseInt(prepTimeFilter.value)
+          matchesPrepTime = filterTime === 121 ? prepTime > 120 : prepTime <= filterTime
+        }
+        
+        // Ingredients filter
+        let matchesIngredients = true
+        if (ingredientFilter.value) {
+          const searchTerms = ingredientFilter.value.toLowerCase().split(',').map(term => term.trim())
+          const recipeIngredients = recipe.recipe_ingredients?.map(ri => ri?.name?.toLowerCase()) || []
+          
+          matchesIngredients = searchTerms.every(term => 
+            recipeIngredients.some(ingredient => ingredient && ingredient.includes(term)))
+        }
+        
+        return matchesSearch && matchesPrepTime && matchesIngredients
+      })
+    })
 
-// Check if any filters are active
-const hasFilters = computed(() => {
-  return prepTimeFilter.value || ingredientFilter.value || searchQuery.value
-})
+    // Paginated recipes
+    const paginatedRecipes = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value
+      const end = start + itemsPerPage.value
+      return filteredRecipes.value.slice(start, end)
+    })
 
-// Clear all filters
-function clearFilters() {
-  searchQuery.value = ''
-  prepTimeFilter.value = ''
-  ingredientFilter.value = ''
+    // Total pages
+    const totalPages = computed(() => {
+      return Math.ceil(filteredRecipes.value.length / itemsPerPage.value)
+    })
+
+    // Check if any filters are active
+    const hasFilters = computed(() => {
+      return prepTimeFilter.value || ingredientFilter.value || searchQuery.value
+    })
+
+    // Clear all filters
+    function clearFilters() {
+      searchQuery.value = ''
+      prepTimeFilter.value = ''
+      ingredientFilter.value = ''
+      currentPage.value = 1
+    }
+
+    // Handle recipe updates from child components
+    // In your Recipes page component
+function handleRecipeUpdate(updatedRecipe) {
+  const index = recipes.value.findIndex(r => r.id === updatedRecipe.id)
+  if (index !== -1) {
+    recipes.value[index] = { 
+      ...recipes.value[index], 
+      ...updatedRecipe 
+    }
+    // Force reactivity update
+    recipes.value = [...recipes.value]
+  }
+}
+
+    // Pagination methods
+    function prevPage() {
+      if (currentPage.value > 1) currentPage.value--
+    }
+
+    function nextPage() {
+      if (currentPage.value < totalPages.value) currentPage.value++
+    }
+
+    function goToPage(page) {
+      if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page
+      }
+    }
+
+    return {
+      // State
+      searchQuery,
+      prepTimeFilter,
+      ingredientFilter,
+      currentPage,
+      itemsPerPage,
+      
+      // Data
+      pending,
+      error,
+      recipes: paginatedRecipes, // Return paginated recipes for display
+      filteredRecipes,
+      
+      // Computed
+      hasFilters,
+      totalPages,
+      
+      // Methods
+      refetch,
+      clearFilters,
+      handleRecipeUpdate,
+      prevPage,
+      nextPage,
+      goToPage
+    }
+  }
 }
 </script>
