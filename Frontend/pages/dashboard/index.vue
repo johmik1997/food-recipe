@@ -20,7 +20,7 @@
             <!-- Welcome Message -->
             <div class="flex-1">
               <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                Welcome back, <span class="text-primary-600">{{ user.name }}</span> 👋
+                Welcome back, <span class="text-primary-600">{{ userData.name }}</span> 👋
               </h1>
               <p class="text-lg text-gray-600 mb-6">
                 {{ welcomeMessage }}
@@ -47,7 +47,7 @@
             </div>
             
             <!-- Stats Cards -->
-            <div class="grid grid-cols-2 gap-4 w-full md:w-auto">
+            <div class="grid grid-cols-3 gap-4 w-full md:w-auto">
               <div 
                 v-for="stat in stats" 
                 :key="stat.label"
@@ -60,31 +60,77 @@
             </div>
           </div>
           
-          <!-- Recent Recipes Section -->
-          <div v-if="recentRecipes.length > 0" class="mt-12">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-xl font-bold text-gray-900">Your Recent Recipes</h3>
-              <NuxtLink 
-                to="/dashboard/recipes" 
-                class="text-sm text-primary-600 hover:text-primary-700 font-medium"
-              >
-                View All Recipes →
-              </NuxtLink>
+          <!-- Recipe Sections -->
+          <div class="mt-12 space-y-12">
+            <!-- Recent Recipes -->
+            <div v-if="recentRecipes.length > 0">
+              <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Your Recent Recipes</h3>
+                <NuxtLink 
+                  to="recipes" 
+                  class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  View All Recipes →
+                </NuxtLink>
+              </div>
+              <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <RecipeCard 
+                  v-for="recipe in recentRecipes" 
+                  :key="recipe.id"
+                  :recipe="recipe"
+                  :show-actions="true"
+                  @edit="handleEditRecipe(recipe.id)"
+                  @delete="handleDeleteRecipe(recipe.id)"
+                />
+              </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <RecipeCard 
-                v-for="recipe in recentRecipes" 
-                :key="recipe.id"
-                :recipe="recipe"
-                :show-actions="true"
-                @edit="handleEditRecipe(recipe.id)"
-                @delete="handleDeleteRecipe(recipe.id)"
-              />
+
+            <!-- Popular Recipes -->
+            <div v-if="popularRecipes.length > 0">
+              <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Most Popular Recipes</h3>
+                <NuxtLink 
+                  to="/recipes/popular" 
+                  class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  View All Popular →
+                </NuxtLink>
+              </div>
+              <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <RecipeCard 
+                  v-for="recipe in popularRecipes" 
+                  :key="recipe.id"
+                  :recipe="recipe"
+                  :show-actions="true"
+                />
+              </div>
+            </div>
+
+            <!-- Favorite Recipes -->
+            <div v-if="favoriteRecipes.length > 0">
+              <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Most Liked Recipes</h3>
+                <NuxtLink 
+                  to="/recipes/favorites" 
+                  class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  View All Favorites →
+                </NuxtLink>
+              </div>
+              <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <RecipeCard 
+                  v-for="recipe in favoriteRecipes" 
+                  :key="recipe.id"
+                  :recipe="recipe"
+                  :show-actions="true"
+                />
+              </div>
             </div>
           </div>
 
           <!-- Empty State -->
-          <div v-if="recentRecipes.length === 0" class="mt-12 text-center py-12">
+          <div v-if="recentRecipes.length === 0 && popularRecipes.length === 0 && favoriteRecipes.length === 0" 
+               class="mt-12 text-center py-12">
             <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <UtensilsIcon class="w-10 h-10 text-gray-400" />
             </div>
@@ -107,18 +153,146 @@
 
 <script setup>
 import { PlusIcon, BookOpenIcon} from '@heroicons/vue/outline'
-
-// Define components (if using Nuxt auto-imports, you can remove these)
-const RecipeCard = defineAsyncComponent(() => import('@/components/RecipeCard.vue'))
-const Navbar = defineAsyncComponent(() => import('@/components/Navbar.vue'))
-const Footer = defineAsyncComponent(() => import('@/components/Footer.vue'))
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
 
 const userId = ref(null)
-const userName = ref('Chef')
-const recipeCount = ref(0)
 const loading = ref(true)
 const error = ref(null)
-const recentRecipes = ref([])
+
+// GraphQL queries
+const USER_DATA_QUERY = gql`
+  query GetUserDashboardData($userId: uuid!) {
+    user: users_by_pk(id: $userId) {
+      id
+      name
+      avatar_image_url
+    }
+    recipes: recipes_aggregate(where: { user_id: { _eq: $userId } }) {
+      aggregate {
+        count
+      }
+    }
+    likes: user_likes_aggregate(where: { user_id: { _eq: $userId } }) {
+      aggregate {
+        count
+      }
+    }
+    bookmarks: user_bookmarks_aggregate(where: { user_id: { _eq: $userId } }) {
+      aggregate {
+        count
+      }
+    }
+      ratings_aggregate {
+        aggregate {
+          avg {
+            value
+          }
+          count
+        }
+      }
+  
+}
+`
+
+const RECENT_RECIPES_QUERY = gql`
+  query GetRecentRecipes($userId: uuid!) {
+    recipes(
+      where: { user_id: { _eq: $userId } }
+      order_by: { created_at: desc }
+      limit: 3
+    ) {
+      id
+      title
+      description
+      prep_time
+      cook_time
+      total_time
+      servings
+      featured_image_url
+      created_at
+      user_likes_aggregate {
+        aggregate {
+          count
+        }
+      }
+      user_bookmarks_aggregate {
+        aggregate {
+          count
+        }
+      }
+    }
+  }
+`
+
+const POPULAR_RECIPES_QUERY = gql`
+  query GetPopularRecipes($userId: uuid!) {
+    recipes(
+      where: { user_id: { _eq: $userId } }
+      order_by: { user_bookmarks_aggregate: { count: desc } }
+      limit: 3
+    ) {
+      id
+      title
+      description
+      prep_time
+      cook_time
+      total_time
+      servings
+      featured_image_url
+      created_at
+      user_likes_aggregate {
+        aggregate {
+          count
+        }
+      }
+      user_bookmarks_aggregate {
+        aggregate {
+          count
+        }
+      }
+        ratings_aggregate {
+        aggregate {
+          avg {
+            value
+          }
+          count
+        }
+      }
+  
+    }
+  }
+`
+
+const FAVORITE_RECIPES_QUERY = gql`
+  query GetFavoriteRecipes($userId: uuid!) {
+    recipes(
+      where: { user_id: { _eq: $userId } }
+      order_by: { user_likes_aggregate: { count: desc } }
+      limit: 3
+    ) {
+      id
+      title
+      description
+      prep_time
+      cook_time
+      total_time
+      servings
+      featured_image_url
+      created_at
+      user_likes_aggregate {
+        aggregate {
+          count
+        }
+      }
+      user_bookmarks_aggregate {
+        aggregate {
+          count
+        }
+      }
+    }
+  }
+`
 
 // Set userId from localStorage
 onMounted(() => {
@@ -127,28 +301,7 @@ onMounted(() => {
     try {
       const user = JSON.parse(userStr)
       userId.value = user.id
-      // Simulate loading recent recipes
-      setTimeout(() => {
-        recentRecipes.value = [
-          {
-            id: '1',
-            title: 'Sample Recipe 1',
-            image: '/placeholder-recipe.jpg',
-            rating: 4.5,
-            prepTime: '30 mins',
-            difficulty: 'Medium'
-          },
-          {
-            id: '2',
-            title: 'Sample Recipe 2',
-            image: '/placeholder-recipe.jpg',
-            rating: 4.0,
-            prepTime: '45 mins',
-            difficulty: 'Easy'
-          }
-        ]
-        loading.value = false
-      }, 1500)
+      fetchData()
     } catch (e) {
       error.value = 'Failed to parse user data'
       loading.value = false
@@ -159,14 +312,71 @@ onMounted(() => {
   }
 })
 
-// User object
-const user = computed(() => ({
-  name: userName.value,
-  recipeCount: recipeCount.value,
-  likeCount: 42, // Example data
-  bookmarkCount: 18, // Example data
-  followerCount: 156 // Example data
+// Fetch all data
+let userResult, recentResult, popularResult, favoriteResult
+
+const fetchData = () => {
+  if (!userId.value) return
+  
+  const { result: userRes } = useQuery(USER_DATA_QUERY, () => ({
+    userId: userId.value
+  }))
+  userResult = userRes
+  
+  const { result: recentRes } = useQuery(RECENT_RECIPES_QUERY, () => ({
+    userId: userId.value
+  }))
+  recentResult = recentRes
+  
+  const { result: popularRes } = useQuery(POPULAR_RECIPES_QUERY, () => ({
+    userId: userId.value
+  }))
+  popularResult = popularRes
+  
+  const { result: favoriteRes } = useQuery(FAVORITE_RECIPES_QUERY, () => ({
+    userId: userId.value
+  }))
+  favoriteResult = favoriteRes
+  
+  // Watch for all results to complete
+  watch([userResult, recentResult, popularResult, favoriteResult], () => {
+    if (userResult.value && recentResult.value && popularResult.value && favoriteResult.value) {
+      loading.value = false
+    }
+  }, { immediate: true })
+}
+
+// Computed properties
+const userData = computed(() => ({
+  name: userResult?.value?.user?.name || 'Chef',
+  recipeCount: userResult?.value?.recipes?.aggregate?.count || 0,
+  likeCount: userResult?.value?.likes?.aggregate?.count || 0,
+  bookmarkCount: userResult?.value?.bookmarks?.aggregate?.count || 0
 }))
+
+const recentRecipes = computed(() => {
+  return recentResult?.value?.recipes?.map(recipe => ({
+    ...recipe,
+    likes_count: recipe.user_likes_aggregate?.aggregate?.count || 0,
+    bookmarks_count: recipe.user_bookmarks_aggregate?.aggregate?.count || 0
+  })) || []
+})
+
+const popularRecipes = computed(() => {
+  return popularResult?.value?.recipes?.map(recipe => ({
+    ...recipe,
+    likes_count: recipe.user_likes_aggregate?.aggregate?.count || 0,
+    bookmarks_count: recipe.user_bookmarks_aggregate?.aggregate?.count || 0
+  })) || []
+})
+
+const favoriteRecipes = computed(() => {
+  return favoriteResult?.value?.recipes?.map(recipe => ({
+    ...recipe,
+    likes_count: recipe.user_likes_aggregate?.aggregate?.count || 0,
+    bookmarks_count: recipe.user_bookmarks_aggregate?.aggregate?.count || 0
+  })) || []
+})
 
 // Welcome message
 const welcomeMessage = computed(() => {
@@ -176,12 +386,11 @@ const welcomeMessage = computed(() => {
   return 'Good evening! Time to plan tomorrow\'s meals!'
 })
 
-// Stats
+// Stats - now only 3 stats (removed followers)
 const stats = computed(() => [
-  { label: 'Recipes', value: user.value.recipeCount, action: 'viewRecipes' },
-  { label: 'Likes', value: user.value.likeCount, action: 'viewLikes' },
-  { label: 'Bookmarks', value: user.value.bookmarkCount, action: 'viewBookmarks' },
-  { label: 'Followers', value: user.value.followerCount, action: 'viewFollowers' }
+  { label: 'Recipes', value: userData.value.recipeCount, action: 'viewRecipes' },
+  { label: 'Likes', value: userData.value.likeCount, action: 'viewLikes' },
+  { label: 'Bookmarks', value: userData.value.bookmarkCount, action: 'viewBookmarks' }
 ])
 
 // Handle stat card clicks
@@ -196,9 +405,6 @@ const handleStatClick = (action) => {
     case 'viewBookmarks':
       navigateTo('/dashboard/bookmarks')
       break
-    case 'viewFollowers':
-      navigateTo('/dashboard/followers')
-      break
   }
 }
 
@@ -209,7 +415,8 @@ const handleEditRecipe = (id) => {
 
 const handleDeleteRecipe = (id) => {
   // Implement delete logic
-  recentRecipes.value = recentRecipes.value.filter(recipe => recipe.id !== id)
+  // After deletion, you might want to refetch the data
+  fetchData()
 }
 </script>
 

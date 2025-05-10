@@ -223,6 +223,11 @@ export default {
     servings
     featured_image_url
     created_at
+    user{
+    name
+    id
+    avatar_image_url
+    }
     user_bookmarks(where: {user_id: {_eq: $userId}}) {
       id
     }
@@ -239,6 +244,14 @@ export default {
         count
       }
     }
+      ratings_aggregate {
+        aggregate {
+          avg {
+            value
+          }
+          count
+        }
+      }
   }
 }
 
@@ -264,14 +277,15 @@ onMounted(() => {
 
     // Apollo query
     const { result, loading: pending, error, refetch } = useQuery(
-      SEARCHABLE_RECIPES,
-      () => ({
-        userId: userId.value
-      }),
-      () => ({
-        enabled: !!userId.value
-      })
-    )
+  SEARCHABLE_RECIPES,
+  () => ({
+    userId: userId.value
+  }),
+  () => ({
+    enabled: !!userId.value,
+    fetchPolicy: 'cache-and-network' // This ensures fresh data
+  })
+)
      console.log(result)
     // Raw recipes data with normalized fields
  const recipes = computed(() => {
@@ -354,15 +368,17 @@ onMounted(() => {
 function handleRecipeUpdate(updatedRecipe) {
   const index = recipes.value.findIndex(r => r.id === updatedRecipe.id)
   if (index !== -1) {
-    recipes.value[index] = { 
-      ...recipes.value[index], 
+    // Create a new array to ensure reactivity
+    const updatedRecipes = [...recipes.value]
+    // Merge the updated properties
+    updatedRecipes[index] = { 
+      ...updatedRecipes[index], 
       ...updatedRecipe 
     }
-    // Force reactivity update
-    recipes.value = [...recipes.value]
+    // Update the reactive reference
+    recipes.value = updatedRecipes
   }
 }
-
     // Pagination methods
     function prevPage() {
       if (currentPage.value > 1) currentPage.value--
