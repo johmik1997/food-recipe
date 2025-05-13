@@ -8,11 +8,12 @@
         <div class="border-b pb-6">
           <h2 class="text-xl font-semibold mb-4 text-gray-700">Basic Information</h2>
           
-          <Field name="title" v-slot="{ field, errorMessage }">
+          <Field name="title" v-slot="{ field, errorMessage }" v-model="form.title">
+            
             <label class="block font-medium text-gray-700 mb-1">Title*</label>
             <input 
               v-bind="field" 
-              v-model="form.title"
+              
               type="text" 
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
               placeholder="e.g. Grandma's Chocolate Chip Cookies"
@@ -20,11 +21,11 @@
             <span v-if="errorMessage" class="text-red-500 text-sm mt-1 block">{{ errorMessage }}</span>
           </Field>
 
-          <Field name="description" v-slot="{ field, errorMessage }" class="mt-4">
+          <Field name="description" v-slot="{ field, errorMessage }" class="mt-4" v-model="form.description">
             <label class="block font-medium text-gray-700 mb-1">Description</label>
             <textarea 
               v-bind="field" 
-              v-model="form.description"
+        
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
               rows="3"
               placeholder="Tell us about your recipe..."
@@ -131,11 +132,40 @@
           </div>
         </div>
 
+          <div class="space-y-1">
+              <Field name="price" v-slot="{ field, errors, meta }"
+              v-model="form.price">
+                <label class="block text-sm font-medium text-gray-700">
+                  price
+                  <span class="text-red-500">*</span>
+                </label>
+                <div class="relative mt-1">
+                  <input 
+                    v-bind="field"
+                    type="number"
+                    class="block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                    placeholder="4"
+                    min="1"
+                    required
+                    :class="{
+                      'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
+                      'border-gray-300': !errors.length
+                    }"
+                  >
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">birr</span>
+                  </div>
+                </div>
+                <p v-if="errors.length" class="mt-1 text-sm text-red-600">
+                  {{ errors[0] }}
+                </p>
+              </Field>
+            </div>
         <!-- Category Section -->
         <div class="border-b pb-6">
-          <Field name="category_id" v-slot="{ field, errorMessage }"
+          <Field name="category_id" v-slot="{ field, errorMessage }" v-model="form.category_id"
           >
-            <label class="block font-medium text-gray-700 mb-1">Category*</label>
+            <label class="block font-medium text-gray-700 mb-1" >Category*</label>
             <select 
               v-bind="field" 
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
@@ -352,6 +382,7 @@ const schema = yup.object({
   description: yup.string().max(500, 'Description must be less than 500 characters'),
   prep_time: yup.number().min(0).max(999, 'Prep time seems too long').nullable(),
   cook_time: yup.number().min(0).max(999, 'Cook time seems too long').nullable(),
+  price: yup.number().min(0).max(9999, 'Price must be less than 9999').required('Price is required'),
   servings: yup.number().min(1).max(100, 'Servings must be less than 100').required('Servings is required'),
   category_id: yup.string().required('Category is required')
 })
@@ -363,7 +394,8 @@ const form = ref({
   prep_time: null,
   cook_time: null,
   servings: null,
-  category_id: ''
+  category_id: '',
+  price:null
 })
 
 const steps = ref([])
@@ -383,6 +415,7 @@ const GET_RECIPE = gql`
       cook_time
       servings
       featured_image_url
+      price
       recipe_categories {
         category {
           id
@@ -428,6 +461,7 @@ const UPDATE_RECIPE = gql`
     $prep_time: Int
     $cook_time: Int
     $servings: Int!
+    $price: Int!
     $category_id: uuid!
   ) {
     update_recipes_by_pk(
@@ -438,6 +472,7 @@ const UPDATE_RECIPE = gql`
         prep_time: $prep_time
         cook_time: $cook_time
         servings: $servings
+        price: $price
       }
     ) {
       id
@@ -446,6 +481,7 @@ const UPDATE_RECIPE = gql`
       prep_time
       cook_time
       servings
+      price
     }
     
     # Update category relationship
@@ -544,6 +580,7 @@ watch(recipeResult, (result) => {
       prep_time: recipe.prep_time,
       cook_time: recipe.cook_time,
       servings: recipe.servings,
+      price: recipe.price,
       category_id: recipe.recipe_categories[0]?.category.id || ''
     }
     
@@ -752,6 +789,7 @@ const submit = async (values) => {
       prep_time: values.prep_time || null,
       cook_time: values.cook_time || null,
       servings: values.servings,
+      price: values.price,
       category_id: values.category_id
     })
     

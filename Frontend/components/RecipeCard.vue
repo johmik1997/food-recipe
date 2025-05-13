@@ -106,6 +106,7 @@
       </div>
       
       <!-- Action buttons -->
+       <div class="flex justify-between mt-4">
       <div class="flex justify-between mt-4">
         <NuxtLink 
           :to="`/recipes/${recipe.id}`" 
@@ -114,6 +115,16 @@
           <Icon name="material-symbols:visibility" class="mr-1" />
           View Recipe
         </NuxtLink>
+      </div>
+      <div class="flex justify-between mt-4">
+        <NuxtLink 
+       :to="`/payment/${recipe.id}`"
+          class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+        >
+          <Icon name="material-symbols:purchase" class="mr-1" />
+          Buy Recipe
+        </NuxtLink>
+      </div>
       </div>
     </div>
   </div>

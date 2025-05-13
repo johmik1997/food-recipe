@@ -29,6 +29,7 @@
             ></textarea>
             <span v-if="errorMessage" class="text-red-500 text-sm mt-1 block">{{ errorMessage }}</span>
           </Field>
+          </div>
         </div>
 
         <!-- Time & Servings Section -->
@@ -123,8 +124,36 @@
         </p>
       </Field>
     </div>
+    <div class="space-y-1">
+    <Field name="price" v-slot="{ field, errors, meta }">
+      <label class="block text-sm font-medium text-gray-700">
+        Price
+        <span class="text-red-500">*</span>
+      </label>
+      <div class="relative mt-1">
+        <input 
+          v-bind="field"
+          type="number"
+          class="block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+          placeholder="0"
+          min="0"
+          required
+          :class="{
+            'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
+            'border-gray-300': !errors.length
+          }"
+        >
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <span class="text-gray-500 sm:text-sm">birr</span>
+        </div>
+      </div>
+      <p v-if="errors.length" class="mt-1 text-sm text-red-600">
+        {{ errors[0] }}
+      </p>
+    </Field>
   </div>
 </div>
+        </div>
 
         <!-- Category Section -->
         <div class="border-b pb-6">
@@ -322,7 +351,6 @@
   {{ loading ? 'Submitting...' : 'Submit Recipe' }}
 </button>
       </div>
-      </div>
     </Form>
   </div>
 </template>
@@ -344,6 +372,7 @@ const schema = yup.object({
   prep_time: yup.number().min(0).max(999, 'Prep time seems too long').nullable(),
   cook_time: yup.number().min(0).max(999, 'Cook time seems too long').nullable(),
   servings: yup.number().min(1).max(100, 'Servings must be less than 100').required('Servings is required'),
+  price: yup.number().min(0).max(9999, 'Price must be less than 9999'),
   category_id: yup.string().required('Category is required')
 })
 
@@ -360,6 +389,7 @@ const CREATE_RECIPE_MUTATION = gql`
       title
       total_time
       featured_image_url
+      price
     }
   }
 `
@@ -558,6 +588,7 @@ const submit = async (values) => {
       servings: values.servings || null,
       category_ids: [values.category_id],
       featured_image_url: null, // Will be set after upload
+      price:values.price || null,
       steps: steps.value.map(step => ({
         step_number: step.step_number,
         instruction: step.instruction,

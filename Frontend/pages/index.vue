@@ -155,16 +155,177 @@
         </NuxtLink>
       </div>
     </section>
+    <section class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 bg-gray-50 rounded-lg">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900">
+          <span class="bg-gradient-to-r from-green-600 to-primary-600 bg-clip-text text-transparent">
+            Community Favorites
+          </span>
+        </h2>
+        <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+          Most bookmarked recipes by our community
+        </p>
+      </div>
 
-    <!-- Additional sections can be added here -->
-  </div>
+      <div v-if="popularLoading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div v-for="n in 3" :key="n" class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div class="animate-pulse">
+            <div class="h-48 bg-gray-200"></div>
+            <div class="p-4">
+              <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="popularResult" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <RecipeCard 
+          v-for="recipe in popularResult.recipes" 
+          :key="recipe.id"
+          :recipe="recipe"
+          :show-author="true"
+        />
+      </div>
+
+      <div class="mt-10 text-center">
+        <NuxtLink 
+          to="/recipes?sort=popular"
+          class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+        >
+          View All Popular Recipes
+          <Icon name="heroicons:arrow-right" class="ml-2 -mr-1 w-5 h-5" />
+        </NuxtLink>
+      </div>
+    </section>
+
+    <!-- Latest Recipes Section -->
+    <section class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900">
+          <span class="bg-gradient-to-r from-green-600 to-primary-600 bg-clip-text text-transparent">
+            Fresh From the Community
+          </span>
+        </h2>
+        <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+          The newest recipes shared by our community members
+        </p>
+      </div>
+
+      <div v-if="latestLoading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div v-for="n in 3" :key="n" class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div class="animate-pulse">
+            <div class="h-48 bg-gray-200"></div>
+            <div class="p-4">
+              <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="latestResult" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <RecipeCard 
+          v-for="recipe in latestResult.recipes" 
+          :key="recipe.id"
+          :recipe="recipe"
+          :show-author="true"
+        />
+      </div>
+
+      <div class="mt-10 text-center">
+        <NuxtLink 
+          to="/recipes?sort=newest"
+          class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+        >
+          View All Recent Recipes
+          <Icon name="heroicons:arrow-right" class="ml-2 -mr-1 w-5 h-5" />
+        </NuxtLink>
+      </div>
+    </section>
+  <section class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 text-center">
+    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-8 text-white">
+      <h2 class="text-3xl font-bold mb-6">
+        {{ isAuthenticated ? 'Ready to Share Your Next Creation?' : 'Join Our Vibrant Food Community' }}
+      </h2>
+      
+      <!-- Loading State -->
+      <div v-if="communityStatsLoading" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div v-for="n in 3" :key="n" class="bg-white/10 p-4 rounded-lg animate-pulse">
+          <div class="h-10 bg-white/20 rounded mb-2 mx-auto w-1/2"></div>
+          <div class="h-6 bg-white/20 rounded w-3/4 mx-auto"></div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="communityStatsError" class="mb-8">
+        <div class="inline-flex items-center px-4 py-2 rounded-md bg-red-100 text-red-700">
+          <Icon name="heroicons:exclamation-circle" class="w-5 h-5 mr-2" />
+          Failed to load community stats
+        </div>
+      </div>
+
+      <!-- Loaded State -->
+      <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white/10 p-4 rounded-lg">
+          <p class="text-4xl font-bold">{{ formatNumber(communityStats?.recipes_aggregate.aggregate.count) || '0' }}</p>
+          <p class="mt-2">Recipes Shared</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded-lg">
+          <p class="text-4xl font-bold">{{ formatNumber(communityStats?.users_aggregate.aggregate.count) || '0' }}</p>
+          <p class="mt-2">Food Creators</p>
+        </div>
+        <div class="bg-white/10 p-4 rounded-lg">
+          <p class="text-4xl font-bold">{{ formatNumber(communityStats?.user_bookmarks_aggregate.aggregate.count) || '0' }}</p>
+          <p class="mt-2">Meals Saved</p>
+        </div>
+      </div>
+
+      <!-- Rest of the content remains the same -->
+      <div class="max-w-2xl mx-auto">
+        <p class="text-xl mb-6">
+          {{ isAuthenticated 
+            ? 'Continue your culinary journey with us - share, explore, and get inspired!'
+            : 'Discover, share, and connect with fellow food enthusiasts.' 
+          }}
+        </p>
+        
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <NuxtLink 
+            to="/recipes"
+            class="px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-gray-100"
+          >
+            Browse Recipes
+          </NuxtLink>
+          
+          <NuxtLink 
+            v-if="!isAuthenticated"
+            to="/register" 
+            class="px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-700 hover:bg-green-800"
+          >
+            Join Now - It's Free!
+          </NuxtLink>
+          
+          <NuxtLink 
+            v-else
+            to="/dashboard/recipes/create" 
+            class="px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-700 hover:bg-green-800"
+          >
+            Create New Recipe
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
+  </section>
   <Footer />
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
+
 const isAuthenticated = ref(false)
 const userId = ref(null)
 
@@ -192,6 +353,124 @@ const trendingRecipes = computed(() => {
   return trendingResult.value?.trending_recipes || []
 })
 
+// Query for community popular recipes
+const { result: popularResult, loading: popularLoading } = useQuery(gql`
+  query GetCommunityPopularRecipes {
+    recipes(
+      order_by: { user_bookmarks_aggregate: { count: desc } }
+      limit: 3
+    ) {
+      id
+      title
+      description
+      prep_time
+      cook_time
+      total_time
+      servings
+      featured_image_url
+      created_at
+      user {
+        id
+        name
+        avatar_image_url
+      }
+      user_likes_aggregate {
+        aggregate {
+          count
+        }
+      }
+      user_bookmarks_aggregate {
+        aggregate {
+          count
+        }
+      }
+      ratings_aggregate {
+        aggregate {
+          avg {
+            value
+          }
+          count
+        }
+      }
+    }
+  }
+`)
+
+// Query for community latest recipes
+const { result: latestResult, loading: latestLoading } = useQuery(gql`
+  query GetCommunityLatestRecipes {
+    recipes(
+      order_by: { created_at: desc }
+      limit: 3
+    ) {
+      id
+      title
+      description
+      prep_time
+      cook_time
+      total_time
+      servings
+      featured_image_url
+      created_at
+      user {
+        id
+        name
+        avatar_image_url
+      }
+      user_likes_aggregate {
+        aggregate {
+          count
+        }
+      }
+      user_bookmarks_aggregate {
+        aggregate {
+          count
+        }
+      }
+      ratings_aggregate {
+        aggregate {
+          avg {
+            value
+          }
+          count
+        }
+      }
+    }
+  }
+`)
+const COMMUNITY_STATS_QUERY = gql`
+   query GetCommunityStats {
+    recipes_aggregate {
+      aggregate {
+        count
+      }
+    }
+    users_aggregate {
+      aggregate {
+        count
+      }
+    }
+    user_bookmarks_aggregate {
+      aggregate {
+        count
+      }
+    }
+  }
+`
+
+const { 
+  result: communityStatsResult,
+  loading: communityStatsLoading,
+  error: communityStatsError 
+} = useQuery(COMMUNITY_STATS_QUERY)
+
+const communityStats = computed(() => communityStatsResult.value)
+
+// Formatting helper function
+const formatNumber = (num) => {
+  if (!num) return '0'
+  return new Intl.NumberFormat().format(num)
+}
 onMounted(() => {
   const userStr = localStorage.getItem("user")
   if (userStr) {
@@ -205,13 +484,3 @@ onMounted(() => {
   }
 })
 </script>
-
-<style scoped>
-/* Custom styles if needed */
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>

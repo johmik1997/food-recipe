@@ -7,7 +7,7 @@
           <!-- Brand Column -->
           <div class="space-y-4">
             <NuxtLink to="/" class="flex items-center gap-2">
-              <span class="text-2xl font-bold text-green-400">🍲 FoodShare</span>
+              <span class="text-2xl font-bold text-green-400">🍲 Kushna</span>
             </NuxtLink>
             <p class="text-gray-400">
               Discover, create, and share delicious recipes with our global food community.
@@ -79,7 +79,7 @@
   
         <!-- Copyright -->
         <div class="mt-16 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
-          <p>© {{ new Date().getFullYear() }} FoodShare. All rights reserved.</p>
+          <p>© {{ new Date().getFullYear() }} Kushna. All rights reserved.</p>
           <p class="mt-2">Made with ❤️ for food lovers worldwide</p>
         </div>
       </div>

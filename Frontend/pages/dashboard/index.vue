@@ -32,7 +32,7 @@
                   to="/dashboard/recipes/create" 
                   class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-primary-600 text-white font-medium rounded-lg shadow-md hover:from-green-700 hover:to-primary-700 transition-all transform hover:-translate-y-0.5"
                 >
-                  <PlusIcon class="w-5 h-5 mr-2" />
+                  <Icon name="heroicons:plus" class="w-5 h-5 mr-2" />
                   Create New Recipe
                 </NuxtLink>
                 
@@ -40,7 +40,7 @@
                   to="/dashboard/my-recipes" 
                   class="inline-flex items-center px-6 py-3 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-colors"
                 >
-                  <BookOpenIcon class="w-5 h-5 mr-2 text-primary-500" />
+                  <Icon name="heroicons:book-open" class="w-5 h-5 mr-2 text-primary-500" />
                   My Recipes
                 </NuxtLink>
               </div>
@@ -67,7 +67,7 @@
               <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-gray-900">Your Recent Recipes</h3>
                 <NuxtLink 
-                  to="recipes" 
+                  to="/dashboard/recipes" 
                   class="text-sm text-primary-600 hover:text-primary-700 font-medium"
                 >
                   View All Recipes →
@@ -77,10 +77,9 @@
                 <RecipeCard 
                   v-for="recipe in recentRecipes" 
                   :key="recipe.id"
-                  :recipe="recipe"
+                  :recipe="formatRecipe(recipe)"
                   :show-actions="true"
-                  @edit="handleEditRecipe(recipe.id)"
-                  @delete="handleDeleteRecipe(recipe.id)"
+                  @update="handleRecipeUpdate"
                 />
               </div>
             </div>
@@ -100,8 +99,9 @@
                 <RecipeCard 
                   v-for="recipe in popularRecipes" 
                   :key="recipe.id"
-                  :recipe="recipe"
+                  :recipe="formatRecipe(recipe)"
                   :show-actions="true"
+                  @update="handleRecipeUpdate"
                 />
               </div>
             </div>
@@ -121,8 +121,9 @@
                 <RecipeCard 
                   v-for="recipe in favoriteRecipes" 
                   :key="recipe.id"
-                  :recipe="recipe"
+                  :recipe="formatRecipe(recipe)"
                   :show-actions="true"
+                  @update="handleRecipeUpdate"
                 />
               </div>
             </div>
@@ -132,7 +133,7 @@
           <div v-if="recentRecipes.length === 0 && popularRecipes.length === 0 && favoriteRecipes.length === 0" 
                class="mt-12 text-center py-12">
             <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <UtensilsIcon class="w-10 h-10 text-gray-400" />
+              <Icon name="material-symbols:restaurant" class="w-10 h-10 text-gray-400" />
             </div>
             <h3 class="text-lg font-medium text-gray-900 mb-2">No Recipes Yet</h3>
             <p class="text-gray-600 mb-6">Start by creating your first delicious recipe!</p>
@@ -140,7 +141,7 @@
               to="/dashboard/recipes/create" 
               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-primary-600 text-white font-medium rounded-lg shadow-md hover:from-green-700 hover:to-primary-700 transition-all"
             >
-              <PlusIcon class="w-5 h-5 mr-2" />
+              <Icon name="heroicons:plus" class="w-5 h-5 mr-2" />
               Create Your First Recipe
             </NuxtLink>
           </div>
@@ -152,16 +153,45 @@
 </template>
 
 <script setup>
-import { PlusIcon, BookOpenIcon} from '@heroicons/vue/outline'
-import { useQuery } from '@vue/apollo-composable'
+// GraphQL imports
+import { useQuery} from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 
 const userId = ref(null)
 const loading = ref(true)
 const error = ref(null)
 
-// GraphQL queries
-const USER_DATA_QUERY = gql`
+// Set userId from localStorage - make this synchronous
+onBeforeMount(() => {
+  try {
+    const userStr = localStorage.getItem("user")
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user?.id) {
+        userId.value = user.id
+      } else {
+        throw new Error('User ID not found in stored data')
+      }
+    } else {
+      throw new Error('No user data found in localStorage')
+    }
+  } catch (e) {
+    error.value = e.message
+    loading.value = false
+    navigateTo('/login')
+  }
+})
+
+// Watch userId to handle redirect if needed
+watch(userId, (newUserId) => {
+  if (!newUserId && !error.value) {
+    // Only redirect if we're not already showing an error
+    navigateTo('/login')
+  }
+})
+
+// GraphQL queries - use watch to wait for userId to be available
+const { result: userResult, loading: userLoading } = useQuery(gql`
   query GetUserDashboardData($userId: uuid!) {
     user: users_by_pk(id: $userId) {
       id
@@ -183,19 +213,15 @@ const USER_DATA_QUERY = gql`
         count
       }
     }
-      ratings_aggregate {
-        aggregate {
-          avg {
-            value
-          }
-          count
-        }
-      }
-  
-}
-`
+  }
+`, () => ({
+  userId: userId.value
+}), () => ({
+  enabled: !!userId.value // Only execute when userId is available
+}))
 
-const RECENT_RECIPES_QUERY = gql`
+// Recent recipes query
+const { result: recentResult, loading: recentLoading } = useQuery(gql`
   query GetRecentRecipes($userId: uuid!) {
     recipes(
       where: { user_id: { _eq: $userId } }
@@ -221,11 +247,24 @@ const RECENT_RECIPES_QUERY = gql`
           count
         }
       }
+      ratings_aggregate {
+        aggregate {
+          avg {
+            value
+          }
+          count
+        }
+      }
     }
   }
-`
+`, () => ({
+  userId: userId.value
+}), () => ({
+  enabled: !!userId.value
+}))
 
-const POPULAR_RECIPES_QUERY = gql`
+// Popular recipes query
+const { result: popularResult, loading: popularLoading } = useQuery(gql`
   query GetPopularRecipes($userId: uuid!) {
     recipes(
       where: { user_id: { _eq: $userId } }
@@ -251,7 +290,7 @@ const POPULAR_RECIPES_QUERY = gql`
           count
         }
       }
-        ratings_aggregate {
+      ratings_aggregate {
         aggregate {
           avg {
             value
@@ -259,12 +298,16 @@ const POPULAR_RECIPES_QUERY = gql`
           count
         }
       }
-  
     }
   }
-`
+`, () => ({
+  userId: userId.value
+}), () => ({
+  enabled: !!userId.value
+}))
 
-const FAVORITE_RECIPES_QUERY = gql`
+// Favorite recipes query
+const { result: favoriteResult, loading: favoriteLoading } = useQuery(gql`
   query GetFavoriteRecipes($userId: uuid!) {
     recipes(
       where: { user_id: { _eq: $userId } }
@@ -290,92 +333,52 @@ const FAVORITE_RECIPES_QUERY = gql`
           count
         }
       }
+      ratings_aggregate {
+        aggregate {
+          avg {
+            value
+          }
+          count
+        }
+      }
     }
   }
-`
+`, () => ({
+  userId: userId.value
+}), () => ({
+  enabled: !!userId.value
+}))
 
-// Set userId from localStorage
-onMounted(() => {
-  const userStr = localStorage.getItem("user")
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr)
-      userId.value = user.id
-      fetchData()
-    } catch (e) {
-      error.value = 'Failed to parse user data'
-      loading.value = false
-    }
-  } else {
-    error.value = 'No user data found'
-    loading.value = false
-  }
+// Watch for loading state changes
+watch([userLoading, recentLoading, popularLoading, favoriteLoading], (loadings) => {
+  loading.value = loadings.some(l => l)
 })
-
-// Fetch all data
-let userResult, recentResult, popularResult, favoriteResult
-
-const fetchData = () => {
-  if (!userId.value) return
-  
-  const { result: userRes } = useQuery(USER_DATA_QUERY, () => ({
-    userId: userId.value
-  }))
-  userResult = userRes
-  
-  const { result: recentRes } = useQuery(RECENT_RECIPES_QUERY, () => ({
-    userId: userId.value
-  }))
-  recentResult = recentRes
-  
-  const { result: popularRes } = useQuery(POPULAR_RECIPES_QUERY, () => ({
-    userId: userId.value
-  }))
-  popularResult = popularRes
-  
-  const { result: favoriteRes } = useQuery(FAVORITE_RECIPES_QUERY, () => ({
-    userId: userId.value
-  }))
-  favoriteResult = favoriteRes
-  
-  // Watch for all results to complete
-  watch([userResult, recentResult, popularResult, favoriteResult], () => {
-    if (userResult.value && recentResult.value && popularResult.value && favoriteResult.value) {
-      loading.value = false
-    }
-  }, { immediate: true })
-}
 
 // Computed properties
 const userData = computed(() => ({
-  name: userResult?.value?.user?.name || 'Chef',
-  recipeCount: userResult?.value?.recipes?.aggregate?.count || 0,
-  likeCount: userResult?.value?.likes?.aggregate?.count || 0,
-  bookmarkCount: userResult?.value?.bookmarks?.aggregate?.count || 0
+  name: userResult.value?.user?.name || 'Chef',
+  avatar: userResult.value?.user?.avatar_image_url || '/images/default-avatar.png',
+  recipeCount: userResult.value?.recipes?.aggregate?.count || 0,
+  likeCount: userResult.value?.likes?.aggregate?.count || 0,
+  bookmarkCount: userResult.value?.bookmarks?.aggregate?.count || 0
 }))
 
-const recentRecipes = computed(() => {
-  return recentResult?.value?.recipes?.map(recipe => ({
-    ...recipe,
-    likes_count: recipe.user_likes_aggregate?.aggregate?.count || 0,
-    bookmarks_count: recipe.user_bookmarks_aggregate?.aggregate?.count || 0
-  })) || []
-})
+const recentRecipes = computed(() => recentResult.value?.recipes || [])
+const popularRecipes = computed(() => popularResult.value?.recipes || [])
+const favoriteRecipes = computed(() => favoriteResult.value?.recipes || [])
 
-const popularRecipes = computed(() => {
-  return popularResult?.value?.recipes?.map(recipe => ({
-    ...recipe,
-    likes_count: recipe.user_likes_aggregate?.aggregate?.count || 0,
-    bookmarks_count: recipe.user_bookmarks_aggregate?.aggregate?.count || 0
-  })) || []
-})
-
-const favoriteRecipes = computed(() => {
-  return favoriteResult?.value?.recipes?.map(recipe => ({
-    ...recipe,
-    likes_count: recipe.user_likes_aggregate?.aggregate?.count || 0,
-    bookmarks_count: recipe.user_bookmarks_aggregate?.aggregate?.count || 0
-  })) || []
+// Format recipe for RecipeCard component
+const formatRecipe = (recipe) => ({
+  ...recipe,
+  user: {
+    id: userId.value,
+    name: userData.value.name,
+    avatar_image_url: userData.value.avatar
+  },
+  is_liked: false,
+  is_bookmarked: false,
+  likes_count: recipe.user_likes_aggregate?.aggregate?.count || 0,
+  bookmarks_count: recipe.user_bookmarks_aggregate?.aggregate?.count || 0
 })
 
 // Welcome message
@@ -386,7 +389,7 @@ const welcomeMessage = computed(() => {
   return 'Good evening! Time to plan tomorrow\'s meals!'
 })
 
-// Stats - now only 3 stats (removed followers)
+// Stats
 const stats = computed(() => [
   { label: 'Recipes', value: userData.value.recipeCount, action: 'viewRecipes' },
   { label: 'Likes', value: userData.value.likeCount, action: 'viewLikes' },
@@ -408,15 +411,9 @@ const handleStatClick = (action) => {
   }
 }
 
-// Recipe actions
-const handleEditRecipe = (id) => {
-  navigateTo(`/dashboard/recipes/edit/${id}`)
-}
-
-const handleDeleteRecipe = (id) => {
-  // Implement delete logic
-  // After deletion, you might want to refetch the data
-  fetchData()
+// Handle recipe updates (likes/bookmarks)
+const handleRecipeUpdate = (updatedRecipe) => {
+  console.log('Recipe updated:', updatedRecipe)
 }
 </script>
 

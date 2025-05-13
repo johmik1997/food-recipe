@@ -24,6 +24,7 @@ type CreateRecipeInput struct {
 	Servings         *int                    `json:"servings"`
 	FeaturedImageURL *string                 `json:"featured_image_url"`
 	UserID           *string                 `json:"user_id"`
+	Price            *float64               `json:"price"`
 	CategoryIDs      []string                `json:"category_ids"`
 	Steps            []RecipeStepInput       `json:"steps"`
 	Ingredients      []RecipeIngredientInput `json:"ingredients"`
@@ -62,6 +63,7 @@ type RecipeOutput struct {
 	TotalTime        *int    `json:"total_time"`
 	Servings         *int    `json:"servings"`
 	FeaturedImageURL *string `json:"featured_image_url"`
+	Price		   *float64 `json:"price"`
 	CreatedAt        string  `json:"created_at"`
 }
 
@@ -92,23 +94,23 @@ func CreateRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build GraphQL mutation
-	mutation := fmt.Sprintf(`
+mutation := fmt.Sprintf(`
 mutation {
   insert_recipes_one(object: {
-    id: "%s",
-    title: "%s",
-    description: %s,
-    prep_time: %s,
-    cook_time: %s,
-    servings: %s,
-    featured_image_url: %s
+	id: "%s",
+	title: "%s",
+	description: %s,
+	prep_time: %s,
+	cook_time: %s,
+	servings: %s,
+	featured_image_url: %s,
+	price: %s,
 	user_id: %s,
   }) {
-    id
-    created_at
+	id
+	created_at
   }
 
-  %s
   %s
   %s
   %s
@@ -120,11 +122,11 @@ mutation {
 		nullOrInt(input.CookTime),
 		nullOrInt(input.Servings),
 		nullOrStr(input.FeaturedImageURL),
+		nullOrFloat(input.Price),
 		nullOrStr(input.UserID),
 		buildStepsInsert(recipeID, input.Steps),
 		buildIngredientsInsert(recipeID, input.Ingredients),
 		buildImagesInsert(recipeID, input.Images),
-		buildCategoryInsert(recipeID, input.CategoryIDs),
 	)
 
 	log.Printf("Executing mutation:\n%s", mutation)
@@ -167,6 +169,7 @@ mutation {
 		TotalTime:        &totalTime,
 		Servings:         input.Servings,
 		FeaturedImageURL: input.FeaturedImageURL,
+		Price: input.Price,
 		CreatedAt:        createdAt,
 	}
 

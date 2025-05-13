@@ -22,6 +22,10 @@ func ExecuteGraphQL(query string, variables map[string]interface{}) (*http.Respo
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-hasura-admin-secret", AdminSecret)
+	// Set the user ID in the header if needed
+	// req.Header.Set("x-hasura-user-id", userID)
+	// Set the role in the header if needed		
+	// req.Header.Set("x-hasura-role", role)
 
 	return http.DefaultClient.Do(req)
 }
