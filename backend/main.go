@@ -16,7 +16,7 @@ import (
 
 type PaymentRequest struct {
 	RecipeID    uuid.UUID  `json:"recipe_id"`
-	Amount      int `json:"amount"`
+	Amount      float64    `json:"amount"`
 	Currency    string  `json:"currency"`
 	Email       string  `json:"email"`
 	FirstName   string  `json:"first_name"`
@@ -108,109 +108,110 @@ func generateTxRef() string {
 	return fmt.Sprintf("chewatatest-%d", randomNum)
 }
 func handlePayment(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Content-Type", "application/json")
 
-	if r.Method == http.MethodOptions {
-		handleCORS(w, r)
-		return
-	}
+    if r.Method == http.MethodOptions {
+        handleCORS(w, r)
+        return
+    }
 
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+    if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
 
-	// Parse the payment request
-	var paymentReq PaymentRequest
-	if err := json.NewDecoder(r.Body).Decode(&paymentReq); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+    // Parse the payment request
+    var paymentReq PaymentRequest
+    if err := json.NewDecoder(r.Body).Decode(&paymentReq); err != nil {
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        return
+    }
 
-	// Validate required fields
-	if paymentReq.RecipeID == uuid.Nil || paymentReq.Email == "" || paymentReq.FirstName == "" || paymentReq.LastName == "" {
-		http.Error(w, "Missing required fields", http.StatusBadRequest)
-		return
-	}
+    // Validate required fields
+    if paymentReq.RecipeID == uuid.Nil || paymentReq.Email == "" || 
+       paymentReq.FirstName == "" || paymentReq.LastName == "" || paymentReq.Amount <= 0 {
+        http.Error(w, "Missing required fields or invalid amount", http.StatusBadRequest)
+        return
+    }
 
-	// Get recipe price from Hasura
-	recipePrice, recipeTitle, err := getRecipePriceFromHasura(paymentReq.RecipeID.String())
-	if err != nil {
-		http.Error(w, "Failed to verify recipe: "+err.Error(), http.StatusBadRequest)
-		return
-	}
+    // Get recipe price from Hasura
+    recipePrice, recipeTitle, err := getRecipePriceFromHasura(paymentReq.RecipeID.String())
+    if err != nil {
+        http.Error(w, "Failed to verify recipe: "+err.Error(), http.StatusBadRequest)
+        return
+    }
 
-	// Verify the payment amount matches the recipe price
-	if float64(paymentReq.Amount) != recipePrice {
-		http.Error(w, fmt.Sprintf("Payment amount (%.2f) does not match recipe price (%.2f)", float64(paymentReq.Amount), recipePrice), http.StatusBadRequest)
-		return
-	}
+    // Verify the payment amount matches the recipe price
+    // Verify the payment amount matches the recipe price
+if paymentReq.Amount != recipePrice {
+    http.Error(w, fmt.Sprintf("Payment amount (%.2f) does not match recipe price (%.2f)", 
+        paymentReq.Amount, recipePrice), http.StatusBadRequest)
+    return
+}
+    // Generate a unique transaction reference
+    txRef := generateTxRef()
 
-	// Generate a unique transaction reference
-	txRef := generateTxRef()
+    // Prepare the payment payload for Chapa
+    payload := strings.NewReader(fmt.Sprintf(`{
+        "amount": "%.2f",
+        "currency": "%s",
+        "email": "%s",
+        "first_name": "%s",
+        "last_name": "%s",
+        "phone_number": "%s",
+        "tx_ref": "%s",
+        "callback_url": "https://your-webhook-url/callback",
+        "return_url": "%s",
+        "customization": {
+            "title": "Purchase: %s",
+            "description": "Recipe purchase"
+        },
+        "meta": {
+            "recipe_id": "%s",
+            "user_email": "%s"
+        }
+    }`,
+        paymentReq.Amount,
+        paymentReq.Currency,
+        paymentReq.Email,
+        paymentReq.FirstName,
+        paymentReq.LastName,
+        paymentReq.PhoneNumber,
+        txRef,
+        paymentReq.SuccessURL,
+        recipeTitle,
+        paymentReq.RecipeID.String(),
+        paymentReq.Email,
+    ))
 
-	// Prepare the payment payload for Chapa
-	payload := strings.NewReader(fmt.Sprintf(`{
-		"amount": "%.2f",
-		"currency": "%s",
-		"email": "%s",
-		"first_name": "%s",
-		"last_name": "%s",
-		"phone_number": "%s",
-		"tx_ref": "%s",
-		"callback_url": "https://your-webhook-url/callback",
-		"return_url": "%s",
-		"customization": {
-			"title": "Payment recipes",
-			"description": "Recipe purchase"
-		},
-		"meta": {
-			"recipe_id": "%s",
-			"user_email": "%s",
-			"hide_receipt": true
-		}
-	}`,
-		float64(paymentReq.Amount),
-		paymentReq.Currency,
-		paymentReq.Email,
-		paymentReq.FirstName,
-		paymentReq.LastName,
-		paymentReq.PhoneNumber,
-		txRef,
-		paymentReq.SuccessURL,
-		recipeTitle,
-		paymentReq.RecipeID,
-		paymentReq.Email,
-	))
+    // Initialize payment with Chapa
+    req, err := http.NewRequest("POST", "https://api.chapa.co/v1/transaction/initialize", payload)
+    if err != nil {
+        http.Error(w, "Error creating payment request", http.StatusInternalServerError)
+        return
+    }
 
-	// Initialize payment with Chapa
-	url := "https://api.chapa.co/v1/transaction/initialize"
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		http.Error(w, "Error creating payment request", http.StatusInternalServerError)
-		return
-	}
+    req.Header.Add("Authorization", "Bearer CHASECK_TEST-pjjzrYoVZs6KvEXJzvi04kYxx8UsHACN")
+    req.Header.Add("Content-Type", "application/json")
 
-	req.Header.Add("Authorization", "Bearer CHASECK_TEST-pjjzrYoVZs6KvEXJzvi04kYxx8UsHACN")
-	req.Header.Add("Content-Type", "application/json")
+    client := &http.Client{}
+    res, err := client.Do(req)
+    if err != nil {
+        http.Error(w, "Failed to reach payment provider", http.StatusBadGateway)
+        return
+    }
+    defer res.Body.Close()
 
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		http.Error(w, "Failed to reach payment provider", http.StatusBadGateway)
-		return
-	}
-	defer res.Body.Close()
+    body, err := io.ReadAll(res.Body)
+    if err != nil {
+        http.Error(w, "Failed to read payment response", http.StatusInternalServerError)
+        return
+    }
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		http.Error(w, "Failed to read payment response", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(body)
+    // Forward the Chapa response directly to client
+    w.WriteHeader(res.StatusCode)
+    w.Write(body)
 }
 
 func handleCORS(w http.ResponseWriter, r *http.Request) {

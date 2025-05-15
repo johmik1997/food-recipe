@@ -80,7 +80,7 @@
             {{ filteredRecipes.length }} {{ filteredRecipes.length === 1 ? 'Recipe' : 'Recipes' }} Available
           </h2>
           <NuxtLink 
-            to="/recipes/create" 
+            to="/dashboard/recipes/create" 
             class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-green-600 to-primary-600 hover:from-green-700 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:-translate-y-0.5"
           >
             <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

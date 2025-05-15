@@ -387,3 +387,183 @@
     }
   };
   </script>
+
+
+
+
+
+
+
+
+-- 1. First create users table
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  avatar_image_url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 2. Create categories table
+CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL UNIQUE,
+  image_url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 3. Create recipes table
+CREATE TABLE recipes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT,
+  prep_time INT, -- in minutes
+  cook_time INT, -- in minutes
+  total_time INT GENERATED ALWAYS AS (prep_time + cook_time) STORED,
+  servings INT,
+  featured_image_url TEXT,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 4. Create recipe_images table (must exist before creating its constraints)
+CREATE TABLE recipe_images (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  is_featured BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+CREATE TABLE recipe_categories (
+  recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
+  category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (recipe_id, category_id)
+);
+
+-- Then create indexes for the junction table
+CREATE INDEX idx_recipe_categories_recipe_id ON recipe_categories(recipe_id);
+CREATE INDEX idx_recipe_categories_category_id ON recipe_categories(category_id);
+
+CREATE UNIQUE INDEX one_featured_image_per_recipe
+ON recipe_images(recipe_id)
+WHERE (is_featured = true);
+
+-- 6. Create remaining tables
+CREATE TABLE recipe_steps (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
+  step_number INT NOT NULL,
+  instruction TEXT NOT NULL,
+  image_url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(recipe_id, step_number)
+);
+
+CREATE TABLE recipe_ingredients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  quantity DECIMAL(10,2),
+  unit TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE user_likes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, recipe_id)
+);
+
+CREATE TABLE user_bookmarks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, recipe_id)
+);
+
+CREATE TABLE comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE ratings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  recipe_id UUID REFERENCES recipes(id) ON DELETE CASCADE,
+  value INT NOT NULL CHECK (value BETWEEN 1 AND 5),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, recipe_id)
+);
+
+CREATE TABLE transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  recipe_id UUID REFERENCES recipes(id) ON DELETE SET NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  status TEXT NOT NULL,
+  chapa_reference TEXT UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create indexes
+CREATE INDEX idx_recipes_user_id ON recipes(user_id);
+CREATE INDEX idx_recipe_steps_recipe_id ON recipe_steps(recipe_id);
+CREATE INDEX idx_user_likes_recipe_id ON user_likes(recipe_id);
+CREATE INDEX idx_recipe_ingredients_recipe_id ON recipe_ingredients(recipe_id);
+CREATE INDEX idx_comments_recipe_id ON comments(recipe_id);
+CREATE INDEX idx_comments_user_id ON comments(user_id);
+CREATE INDEX idx_ratings_recipe_id ON ratings(recipe_id);
+CREATE INDEX idx_transactions_user_id ON transactions(user_id);
+CREATE INDEX idx_transactions_recipe_id ON transactions(recipe_id);
+
+
+CREATE INDEX idx_recipe_categories_recipe_id ON recipe_categories(recipe_id);
+CREATE INDEX idx_recipe_categories_category_id ON recipe_categories(category_id);
+CREATE UNIQUE INDEX one_featured_image_per_recipe
+ON recipe_images(recipe_id)
+WHERE (is_featured = true);
+ALTER TABLE recipes ADD COLUMN trending_score DECIMAL(10,2) DEFAULT 0;
+CREATE INDEX idx_recipes_trending_score ON recipes(trending_score DESC);
+
+-- Create timestamp update function and triggers
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_users_timestamp
+BEFORE UPDATE ON users
+FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER update_recipes_timestamp
+BEFORE UPDATE ON recipes
+FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER update_comments_timestamp
+BEFORE UPDATE ON comments
+FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER update_ratings_timestamp
+BEFORE UPDATE ON ratings
+FOR EACH ROW EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER update_transactions_timestamp
+BEFORE UPDATE ON transactions
+FOR EACH ROW EXECUTE FUNCTION update_timestamp();

@@ -125,7 +125,7 @@
         
         <!-- Sign Up Button -->
         <NuxtLink 
-          to="/signup" 
+          to="/register" 
           class="bg-green-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-green-700 transition-colors hidden md:block text-sm sm:text-base"
         >
           Sign Up
@@ -217,6 +217,14 @@
               @click="mobileMenuOpen = false"
             >
               Purchased Recipes
+            </NuxtLink>
+            <NuxtLink 
+              to="/dashboard/updateProfile"
+              class="block py-2 px-3 rounded hover:bg-gray-100 text-gray-700"
+              active-class="text-green-600 font-medium bg-green-50"
+              @click="mobileMenuOpen = false"
+            >
+              update avater
             </NuxtLink>
             <button 
               @click="logout"
