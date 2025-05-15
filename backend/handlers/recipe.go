@@ -24,7 +24,7 @@ type CreateRecipeInput struct {
 	Servings         *int                    `json:"servings"`
 	FeaturedImageURL *string                 `json:"featured_image_url"`
 	UserID           *string                 `json:"user_id"`
-	Price            *float64               `json:"price"`
+	Price            *int               `json:"price"`
 	CategoryIDs      []string                `json:"category_ids"`
 	Steps            []RecipeStepInput       `json:"steps"`
 	Ingredients      []RecipeIngredientInput `json:"ingredients"`
@@ -63,7 +63,7 @@ type RecipeOutput struct {
 	TotalTime        *int    `json:"total_time"`
 	Servings         *int    `json:"servings"`
 	FeaturedImageURL *string `json:"featured_image_url"`
-	Price		   *float64 `json:"price"`
+	Price		   *int `json:"price"`
 	CreatedAt        string  `json:"created_at"`
 }
 
@@ -122,7 +122,7 @@ mutation {
 		nullOrInt(input.CookTime),
 		nullOrInt(input.Servings),
 		nullOrStr(input.FeaturedImageURL),
-		nullOrFloat(input.Price),
+		nullOrInt(input.Price),
 		nullOrStr(input.UserID),
 		buildStepsInsert(recipeID, input.Steps),
 		buildIngredientsInsert(recipeID, input.Ingredients),
