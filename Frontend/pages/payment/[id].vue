@@ -1,4 +1,7 @@
 <template>
+    <div class="min-h-screen bg-gray-50">
+    <Navbar />
+    
   <div class="max-w-xl mx-auto p-6">
     <h1 class="text-2xl font-bold mb-6 text-center">Payment for {{ recipeTitle }}</h1>
     <form @submit.prevent="submitPayment" class="space-y-4">
@@ -43,6 +46,8 @@
         {{ error }}
       </div>
     </form>
+  </div>
+  <Footer/>
   </div>
 </template>
 
@@ -119,6 +124,13 @@ watch(queryLoading, (loading) => {
 onMounted(() => {
   const user = JSON.parse(localStorage.getItem('user'))
   userId.value = user?.id || null
+  if (!userId.value) {
+    // Redirect to login or show an error message
+    navigateTo('/login')
+    // For this example, we'll just set an error message
+    error.value = 'User not authenticated'
+
+  }
 })
 
 // Submit payment to your backend

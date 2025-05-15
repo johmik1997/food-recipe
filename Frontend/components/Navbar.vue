@@ -7,7 +7,7 @@
         <span class="hidden sm:inline">Kushna</span>
       </NuxtLink>
 
-      <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-3">
         <NuxtLink 
           to="/recipes" 
           class="hover:text-green-600 transition-colors text-sm sm:text-base"
@@ -140,64 +140,111 @@
       </template>
     </div>
 
-    <!-- Mobile Menu -->
+    <!-- Mobile Menu Overlay -->
     <div 
       v-if="mobileMenuOpen" 
-      class="fixed inset-0 bg-white z-40 flex flex-col pt-20 px-6 md:hidden"
+      class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
       @click="mobileMenuOpen = false"
+    ></div>
+
+    <!-- Mobile Menu Sidebar -->
+    <div 
+      v-if="mobileMenuOpen" 
+      class="fixed top-0 right-0 h-full w-64 bg-white z-50 shadow-lg transform transition-transform duration-300 ease-in-out"
+      :class="{ 'translate-x-0': mobileMenuOpen, 'translate-x-full': !mobileMenuOpen }"
     >
-      <div class="space-y-4">
+      <div class="flex justify-between items-center p-4 border-b">
+        <NuxtLink to="/" class="text-xl font-bold text-green-600" @click="mobileMenuOpen = false">
+          Kushna
+        </NuxtLink>
+        <button @click="mobileMenuOpen = false" class="text-gray-500 hover:text-gray-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-2">
+        <!-- Common Links -->
+        <NuxtLink 
+          to="/recipes" 
+          class="block py-2 px-3 rounded hover:bg-gray-100 text-gray-700"
+          active-class="text-green-600 font-medium bg-green-50"
+          @click="mobileMenuOpen = false"
+        >
+          Browse Recipes
+        </NuxtLink>
+        <NuxtLink 
+          to="/categories" 
+          class="block py-2 px-3 rounded hover:bg-gray-100 text-gray-700"
+          active-class="text-green-600 font-medium bg-green-50"
+          @click="mobileMenuOpen = false"
+        >
+          Categories
+        </NuxtLink>
+
         <template v-if="isAuthenticated">
-          <NuxtLink 
-            to="/dashboard/my-recipe" 
-            class="block py-3 text-lg border-b border-gray-100"
-            @click="mobileMenuOpen = false"
-          >
-            My Recipes
-          </NuxtLink>
-          <NuxtLink 
-            to="/dashboard/bookmarks" 
-            class="block py-3 text-lg border-b border-gray-100"
-            @click="mobileMenuOpen = false"
-          >
-            Bookmarks
-          </NuxtLink>
-          <NuxtLink 
-            to="/dashboard" 
-            class="block py-3 text-lg border-b border-gray-100"
-            @click="mobileMenuOpen = false"
-          >
-            Dashboard
-          </NuxtLink>
-          <NuxtLink 
-            to="/dashboard/purchases" 
-            class="block py-3 text-lg border-b border-gray-100"
-            @click="mobileMenuOpen = false"
-          >
-            Purchased Recipes
-          </NuxtLink>
-          <button 
-            @click="logout"
-            class="w-full text-left py-3 text-lg border-b border-gray-100 text-red-600"
-          >
-            Logout
-          </button>
+          <!-- User Links -->
+          <div class="pt-2 mt-2 border-t">
+            <NuxtLink 
+              to="/dashboard/my-recipe" 
+              class="block py-2 px-3 rounded hover:bg-gray-100 text-gray-700"
+              active-class="text-green-600 font-medium bg-green-50"
+              @click="mobileMenuOpen = false"
+            >
+              My Recipes
+            </NuxtLink>
+            <NuxtLink 
+              to="/dashboard/bookmarks" 
+              class="block py-2 px-3 rounded hover:bg-gray-100 text-gray-700"
+              active-class="text-green-600 font-medium bg-green-50"
+              @click="mobileMenuOpen = false"
+            >
+              Bookmarks
+            </NuxtLink>
+            <NuxtLink 
+              to="/dashboard" 
+              class="block py-2 px-3 rounded hover:bg-gray-100 text-gray-700"
+              active-class="text-green-600 font-medium bg-green-50"
+              @click="mobileMenuOpen = false"
+            >
+              Dashboard
+            </NuxtLink>
+            <NuxtLink 
+              to="/dashboard/purchases" 
+              class="block py-2 px-3 rounded hover:bg-gray-100 text-gray-700"
+              active-class="text-green-600 font-medium bg-green-50"
+              @click="mobileMenuOpen = false"
+            >
+              Purchased Recipes
+            </NuxtLink>
+            <button 
+              @click="logout"
+              class="w-full text-left py-2 px-3 rounded hover:bg-gray-100 text-red-600"
+            >
+              Logout
+            </button>
+          </div>
         </template>
         <template v-else>
-          <NuxtLink 
-            to="/login" 
-            class="block py-3 text-lg border-b border-gray-100"
-            @click="mobileMenuOpen = false"
-          >
-            Login
-          </NuxtLink>
-          <NuxtLink 
-            to="/signup" 
-            class="block py-3 text-lg border-b border-gray-100 text-green-600 font-medium"
-            @click="mobileMenuOpen = false"
-          >
-            Sign Up
-          </NuxtLink>
+          <!-- Auth Links -->
+          <div class="pt-2 mt-2 border-t">
+            <NuxtLink 
+              to="/login" 
+              class="block py-2 px-3 rounded hover:bg-gray-100 text-gray-700"
+              active-class="text-green-600 font-medium bg-green-50"
+              @click="mobileMenuOpen = false"
+            >
+              Login
+            </NuxtLink>
+            <NuxtLink 
+              to="/signup" 
+              class="block py-2 px-3 rounded bg-green-600 text-white hover:bg-green-700"
+              @click="mobileMenuOpen = false"
+            >
+              Sign Up
+            </NuxtLink>
+          </div>
         </template>
       </div>
     </div>
@@ -263,6 +310,12 @@ const toggleDropdown = () => {
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
   dropdownOpen.value = false
+  // Prevent body scroll when menu is open
+  if (mobileMenuOpen.value) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
 }
 
 const logout = () => {
@@ -270,6 +323,7 @@ const logout = () => {
   isAuthenticated.value = false
   dropdownOpen.value = false
   mobileMenuOpen.value = false
+  document.body.style.overflow = ''
   navigateTo('/login')
 }
 
@@ -287,6 +341,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  document.body.style.overflow = ''
 })
 </script>
 
@@ -302,4 +357,13 @@ onBeforeUnmount(() => {
   transform: translateY(-10px);
 }
 
+/* Mobile menu transition */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+}
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(100%);
+}
 </style>

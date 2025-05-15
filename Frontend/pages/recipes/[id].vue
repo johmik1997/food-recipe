@@ -1,5 +1,9 @@
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="min-h-screen bg-gray-50">
+    <Navbar />
+    
+  <div class="max-w-4xl mx-auto px-4 py-8 md:py-12">
+ 
     <!-- Loading state -->
     <div v-if="loading" class="text-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
@@ -7,83 +11,103 @@
     </div>
 
     <!-- Error state -->
-    <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-      <p>Error loading recipe: {{ error.message }}</p>
+    <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+      <p class="font-medium">Error loading recipe: {{ error.message }}</p>
       <button 
         @click="fetchRecipe" 
-        class="mt-2 px-3 py-1 bg-red-100 hover:bg-red-200 rounded text-red-700"
+        class="mt-2 px-4 py-2 bg-red-100 hover:bg-red-200 rounded-lg text-red-700 font-medium transition-colors"
       >
         Retry
       </button>
     </div>
 
     <!-- Recipe content -->
-    <div v-if="recipe" class="space-y-8">
+    <div v-if="recipe" class="space-y-10">
       <!-- Recipe header -->
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">{{ recipe.title }}</h1>
-        
-        <div class="mt-2 flex items-center space-x-4 text-gray-600">
-          <span v-if="recipe.prep_time" class="flex items-center">
-            <ClockIcon class="h-5 w-5 mr-1" />
-            Prep: {{ recipe.prep_time }} min
-          </span>
-          <span v-if="recipe.cook_time" class="flex items-center">
-            <FireIcon class="h-5 w-5 mr-1" />
-            Cook: {{ recipe.cook_time }} min
-          </span>
-          <span v-if="recipe.servings" class="flex items-center">
-            <UsersIcon class="h-5 w-5 mr-1" />
-            Serves: {{ recipe.servings }}
-          </span>
+      <div class="space-y-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">{{ recipe.title }}</h1>
+          
+          <div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-gray-600">
+            <span v-if="recipe.prep_time" class="flex items-center">
+              <ClockIcon class="h-5 w-5 mr-2 text-gray-500" />
+              Prep: {{ recipe.prep_time }} min
+            </span>
+            <span v-if="recipe.cook_time" class="flex items-center">
+              <FireIcon class="h-5 w-5 mr-2 text-gray-500" />
+              Cook: {{ recipe.cook_time }} min
+            </span>
+            <span v-if="recipe.servings" class="flex items-center">
+              <UsersIcon class="h-5 w-5 mr-2 text-gray-500" />
+              Serves: {{ recipe.servings }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Featured image -->
+        <div v-if="recipe.featured_image_url" class="rounded-xl overflow-hidden shadow-lg">
+          <img 
+            :src="recipe.featured_image_url" 
+            :alt="recipe.title" 
+            class="w-full h-96 object-cover"
+            loading="lazy"
+          />
         </div>
       </div>
 
-      <!-- Featured image -->
-      <div v-if="recipe.featured_image_url" class="rounded-lg overflow-hidden shadow-lg">
-        <img 
-          :src="recipe.featured_image_url" 
-          :alt="recipe.title" 
-          class="w-full h-96 object-cover"
-        />
-      </div>
-
       <!-- Description -->
-      <div v-if="recipe.description" class="prose max-w-none">
-        <p class="text-lg text-gray-700">{{ recipe.description }}</p>
+      <div v-if="recipe.description" class="prose max-w-none text-lg text-gray-700 leading-relaxed">
+        <p>{{ recipe.description }}</p>
       </div>
 
       <!-- Ingredients -->
-      <div class="bg-gray-50 p-6 rounded-lg">
-        <h2 class="text-2xl font-bold mb-4 text-gray-900">Ingredients</h2>
-        <ul class="space-y-2">
-          <li v-for="(ingredient, index) in recipe.recipe_ingredients" :key="index" class="flex items-start">
-            <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-2"></span>
-            <span>
-              <span v-if="ingredient.quantity">{{ ingredient.quantity }}</span>
-              <span v-if="ingredient.unit" class="ml-1">{{ ingredient.unit }}</span>
-              <span class="ml-2 font-medium">{{ ingredient.name }}</span>
+      <div class="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm">
+        <h2 class="text-2xl font-bold mb-5 text-gray-900 flex items-center">
+          <ClipboardListIcon class="h-6 w-6 mr-2 text-blue-600" />
+          Ingredients
+        </h2>
+        <ul class="space-y-3">
+          <li 
+            v-for="(ingredient, index) in recipe.recipe_ingredients" 
+            :key="index" 
+            class="flex items-start group"
+          >
+            <span class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 mt-0.5 mr-3 flex-shrink-0 group-hover:bg-blue-200 transition-colors">
+              <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+            </span>
+            <span class="text-gray-700">
+              <span v-if="ingredient.quantity" class="font-medium">{{ ingredient.quantity }}</span>
+              <span v-if="ingredient.unit" class="ml-1 text-gray-600">{{ ingredient.unit }}</span>
+              <span class="ml-2">{{ ingredient.name }}</span>
             </span>
           </li>
         </ul>
       </div>
 
       <!-- Steps -->
-      <div class="space-y-6">
-        <h2 class="text-2xl font-bold mb-4 text-gray-900">Instructions</h2>
-        <div v-for="step in recipe.recipe_steps" :key="step.step_number" class="flex">
+      <div class="space-y-8">
+        <h2 class="text-2xl font-bold mb-6 text-gray-900 flex items-center">
+          <BookOpenIcon class="h-6 w-6 mr-2 text-blue-600" />
+          Instructions
+        </h2>
+        <div 
+          v-for="step in recipe.recipe_steps" 
+          :key="step.step_number" 
+          class="flex group hover:bg-gray-50 rounded-lg p-3 transition-colors"
+        >
           <div class="flex-shrink-0 mr-4">
-            <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white font-bold">
+            <span class="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white font-bold group-hover:bg-blue-700 transition-colors">
               {{ step.step_number }}
             </span>
           </div>
           <div class="prose max-w-none flex-1">
-            <p>{{ step.instruction }}</p>
+            <p class="text-gray-800">{{ step.instruction }}</p>
             <img 
               v-if="step.image_url" 
               :src="step.image_url" 
               :alt="`Step ${step.step_number}`"
-              class="mt-3 rounded-lg shadow-md max-w-full"
+              class="mt-4 rounded-lg shadow-md max-w-full border border-gray-200"
+              loading="lazy"
             />
           </div>
         </div>
@@ -94,52 +118,63 @@
         <div 
           v-for="(image, index) in recipe.images" 
           :key="index"
-          class="overflow-hidden rounded-lg shadow-md"
+          class="overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow"
         >
           <img 
             :src="image.image_url" 
             :alt="`Recipe image ${index + 1}`"
-            class="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
+            class="w-full h-48 md:h-56 object-cover hover:scale-105 transition-transform duration-300"
+            loading="lazy"
           />
         </div>
       </div>
 
       <!-- Reviews Section -->
-      <div class="mt-12">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-bold text-gray-900">Reviews</h2>
-          <div class="flex items-center">
-            <div class="flex items-center mr-4">
-              <StarIcon v-for="i in 5" :key="i" 
-                class="h-5 w-5"
-                :class="i <= Math.round(recipe.average_rating) ? 'text-yellow-400' : 'text-gray-300'"
-              />
-              <span class="ml-2 text-gray-700">
-                {{ recipe.average_rating?.toFixed(1) || '0.0' }} ({{ recipe.review_count || 0 }} reviews)
+      <div class="mt-12 pt-8 border-t border-gray-200">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+          <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+            <StarIcon class="h-6 w-6 mr-2 text-blue-600" />
+            Reviews
+          </h2>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div class="flex items-center">
+              <div class="flex items-center mr-2">
+                <StarIcon v-for="i in 5" :key="i" 
+                  class="h-5 w-5"
+                  :class="i <= Math.round(recipe.average_rating) ? 'text-yellow-400' : 'text-gray-300'"
+                />
+              </div>
+              <span class="text-gray-700 ml-1">
+                <span class="font-medium">{{ recipe.average_rating?.toFixed(1) || '0.0' }}</span>
+                <span class="text-gray-500"> ({{ recipe.review_count || 0 }} reviews)</span>
               </span>
             </div>
             <button 
               @click="handleReviewButtonClick"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center"
             >
+              <PencilIcon class="h-5 w-5 mr-2" />
               Write a Review
             </button>
           </div>
         </div>
 
         <!-- Review Form -->
-        <div v-if="showReviewForm" class="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h3 class="text-lg font-medium mb-4">Add Your Review</h3>
+        <div 
+          v-if="showReviewForm" 
+          class="bg-white p-6 rounded-xl shadow-md mb-8 border border-gray-100"
+        >
+          <h3 class="text-xl font-medium mb-5 text-gray-900">Add Your Review</h3>
           <form @submit.prevent="submitReview">
-            <div class="mb-4">
-              <label class="block text-gray-700 mb-2">Rating <span class="text-red-500">*</span></label>
+            <div class="mb-5">
+              <label class="block text-gray-700 mb-2 font-medium">Rating <span class="text-red-500">*</span></label>
               <div class="flex">
                 <button 
                   v-for="i in 5" 
                   :key="i"
                   type="button"
                   @click="newReview.rating = i"
-                  class="focus:outline-none"
+                  class="focus:outline-none transform hover:scale-110 transition-transform"
                 >
                   <StarIcon 
                     class="h-8 w-8"
@@ -151,30 +186,33 @@
                 Please select a rating
               </p>
             </div>
-            <div class="mb-4">
-              <label for="comment" class="block text-gray-700 mb-2">Comment (optional)</label>
+            <div class="mb-5">
+              <label for="comment" class="block text-gray-700 mb-2 font-medium">Comment (optional)</label>
               <textarea
                 id="comment"
                 v-model="newReview.comment"
                 rows="4"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                 placeholder="Share your thoughts about this recipe..."
               ></textarea>
             </div>
-            <div class="flex justify-end">
+            <div class="flex justify-end gap-3">
               <button
                 type="button"
                 @click="showReviewForm = false"
-                class="mr-3 px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center"
                 :disabled="submittingReview"
               >
-                <span v-if="submittingReview">Submitting...</span>
+                <span v-if="submittingReview" class="flex items-center">
+                  <SpinnerIcon class="animate-spin h-4 w-4 mr-2" />
+                  Submitting...
+                </span>
                 <span v-else>Submit Review</span>
               </button>
             </div>
@@ -183,21 +221,25 @@
 
         <!-- Reviews List -->
         <div v-if="recipe.combined_reviews?.length > 0" class="space-y-6">
-          <div v-for="review in recipe.combined_reviews" :key="review.id" class="bg-white p-6 rounded-lg shadow-sm">
+          <div 
+            v-for="review in recipe.combined_reviews" 
+            :key="review.id" 
+            class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 transition-colors"
+          >
             <div class="flex items-start">
               <img 
                 :src="review.user.avatar_image_url || '/placeholder-user.jpg'" 
                 :alt="review.user.name"
-                class="h-10 w-10 rounded-full object-cover mr-4"
+                class="h-10 w-10 rounded-full object-cover mr-4 flex-shrink-0"
               />
               <div class="flex-1">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <h4 class="font-medium text-gray-900">{{ review.user.name }}</h4>
-                  <span class="text-sm text-gray-500">{{ formatDate(review.created_at) }}</span>
+                  <span class="text-sm text-gray-500 mt-1 sm:mt-0">{{ formatDate(review.created_at) }}</span>
                 </div>
-                <div v-if="review.rating" class="flex items-center mt-1 mb-3">
+                <div v-if="review.rating" class="flex items-center mt-2 mb-3">
                   <StarIcon v-for="i in 5" :key="i" 
-                    class="h-4 w-4"
+                    class="h-5 w-5"
                     :class="i <= review.rating ? 'text-yellow-400' : 'text-gray-300'"
                   />
                 </div>
@@ -207,12 +249,15 @@
           </div>
         </div>
 
-        <div v-else class="bg-white p-8 text-center rounded-lg shadow-sm">
-          <p class="text-gray-600">No reviews yet. Be the first to review!</p>
+        <div v-else class="bg-white p-8 text-center rounded-xl shadow-sm border border-gray-100">
+          <ChatBubbleBottomCenterTextIcon class="h-10 w-10 mx-auto text-gray-400" />
+          <p class="text-gray-600 mt-3">No reviews yet. Be the first to review!</p>
         </div>
       </div>
     </div>
   </div>
+<Footer/>
+    </div>
 </template>
 
 <script setup>

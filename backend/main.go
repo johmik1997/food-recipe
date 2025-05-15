@@ -162,7 +162,7 @@ func handlePayment(w http.ResponseWriter, r *http.Request) {
 		"callback_url": "https://your-webhook-url/callback",
 		"return_url": "%s",
 		"customization": {
-			"title": "Pay %s",
+			"title": "Payment recipes",
 			"description": "Recipe purchase"
 		},
 		"meta": {

@@ -1,0 +1,116 @@
+# Custom input/output types and your 5 Action definitions
+
+#–– Create Recipe ––
+input CreateRecipeInput {
+  title: String!
+  description: String
+  prep_time: Int
+  cook_time: Int
+  servings: Int
+  featured_image_url: String
+  price: Int
+  user_id: uuid
+  category_ids: [uuid!]
+  steps: [RecipeStepInput!]!
+  ingredients: [RecipeIngredientInput!]!
+  images: [RecipeImageInput!]
+}
+
+input RecipeStepInput {
+  step_number: Int!
+  instruction: String!
+  image_url: String
+}
+
+input RecipeIngredientInput {
+  name: String!
+  quantity: numeric
+  unit: String
+}
+
+input RecipeImageInput {
+  image_url: String!
+  is_featured: Boolean
+}
+
+type RecipeOutput {
+  id: uuid!
+  title: String!
+  description: String
+  prep_time: Int
+  cook_time: Int
+  total_time: Int
+  servings: Int
+  featured_image_url: String
+  price: Int
+  created_at: timestamptz!
+}
+
+type Mutation {
+  createRecipe(object: CreateRecipeInput!): RecipeOutput
+}
+
+#–– Login ––
+type LoginResponse {
+  token: String!
+  user: User!
+}
+
+type User {
+  id: String!
+  email: String!
+  name: String!
+}
+
+extend type Mutation {
+  login(email: String!, password: String!): LoginResponse
+}
+
+#–– Register ––
+input RegisterInput {
+  email: String!
+  password: String!
+  name: String!
+}
+
+type RegisterResponse {
+  token: String!
+  user: User!
+}
+
+extend type Mutation {
+  register(input: RegisterInput!): RegisterResponse
+}
+
+#–– Upload Profile Image ––
+input UploadProfileInput {
+  userId: uuid!
+  base64str: String!
+  filename: String!
+}
+
+type UploadImageOutput {
+  success: Boolean!
+  message: String
+  avatar_image_url: String
+}
+
+extend type Mutation {
+  uploadProfileImage(input: UploadProfileInput!): UploadImageOutput
+}
+
+#–– Upload Recipe Image ––
+type UploadRecipeImageOutput {
+  success: Boolean!
+  message: String
+  image_url: String
+}
+
+extend type Mutation {
+  uploadRecipeImage(
+    recipe_id: uuid!
+    is_featured: Boolean!
+    base64str: String!
+    filename: String!
+  ): UploadRecipeImageOutput
+}

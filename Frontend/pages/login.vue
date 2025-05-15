@@ -2,7 +2,10 @@
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
-        <NuxtImg src="/logo.png" alt="Logo" class="mx-auto h-16 w-auto mb-4" />
+         <NuxtLink to="/" class="text-xl text-center font-bold text-green-600 flex items-center gap-2">
+        <span>🍲</span>
+        <span class="hidden sm:inline">Kushna</span>
+      </NuxtLink>
         <h2 class="text-3xl font-bold text-indigo-900 font-serif">Sign In</h2>
       </div>
 

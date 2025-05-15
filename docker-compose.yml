@@ -1,13 +1,16 @@
-
+version: '3.8'
 
 services:
   postgres:
     image: postgres:15
+    container_name: postgres
     restart: unless-stopped
     volumes:
       - db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgrespassword
+    networks:
+      - app-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -15,23 +18,32 @@ services:
       retries: 5
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
     ports:
       - "3001:3001"
-    container_name: backend
     restart: unless-stopped
     environment:
       JWT_SECRET: "9a4049355a147359591e126f535fe1146eb3de0bb00c21532b79032efdc39b6c84d260618b723126afc587d8d5087ba0a9b91817b48fb72f45effbbd86a2f2186dbd6948c06be8b579e440a8ed8f19e59b48c4f785f49d2f6ff86f165d052fea0ea2c416cba31da1dec6c1ca547ec2606378bbb666dc5d82e921d458af823acfdb36c3fecbb7ba14add576ad88eefba0b31f3606f8fc92fd52cf144a3f4891b5951822e49a0f966799fadab1bed093f0067d3c33f2660b42fcb41cb6b3e5e2da71ef613e8f117454def63f20e2e8e975677fa10bc75cd76626696ff6614ea1d8c7c866592e4118d439b3180bc1f0546aec310efd5e8ed2d18d994502d9d5c7ed"
       DB_CONNECTION: "postgres://postgres:postgrespassword@postgres:5432/postgres?sslmode=disable"
+      HASURA_GRAPHQL_ENDPOINT: "http://graphql-engine:8080/v1/graphql"
+      HASURA_GRAPHQL_ADMIN_SECRET: "myadminsecretkey"
       CLOUDINARY_CLOUD_NAME: "dc9or5rjo"
       CLOUDINARY_API_KEY: "433214776171187"
       CLOUDINARY_API_SECRET: "ThV_N-ztM-fPMvNYw_OxtLdOIag"
+    networks:
+      - app-network
     depends_on:
       postgres:
         condition: service_healthy
+      graphql-engine:
+        condition: service_started
 
   graphql-engine:
     image: hasura/graphql-engine:v2.46.0
+    container_name: graphql-engine
     ports:
       - "8080:8080"
     restart: unless-stopped
@@ -45,6 +57,30 @@ services:
       HASURA_GRAPHQL_DEV_MODE: "true"
       HASURA_GRAPHQL_ADMIN_SECRET: "myadminsecretkey"
       HASURA_GRAPHQL_JWT_SECRET: '{"type":"HS256","key":"9a4049355a147359591e126f535fe1146eb3de0bb00c21532b79032efdc39b6c84d260618b723126afc587d8d5087ba0a9b91817b48fb72f45effbbd86a2f2186dbd6948c06be8b579e440a8ed8f19e59b48c4f785f49d2f6ff86f165d052fea0ea2c416cba31da1dec6c1ca547ec2606378bbb666dc5d82e921d458af823acfdb36c3fecbb7ba14add576ad88eefba0b31f3606f8fc92fd52cf144a3f4891b5951822e49a0f966799fadab1bed093f0067d3c33f2660b42fcb41cb6b3e5e2da71ef613e8f117454def63f20e2e8e975677fa10bc75cd76626696ff6614ea1d8c7c866592e4118d439b3180bc1f0546aec310efd5e8ed2d18d994502d9d5c7ed"}'
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: nuxt-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NUXT_PUBLIC_API_BASE_URL: "http://backend:3001"
+      NUXT_PUBLIC_HASURA_URL: "http://graphql-engine:8080/v1/graphql"
+      NUXT_PUBLIC_HASURA_WS_URL: "ws://graphql-engine:8080/v1/graphql"
+    networks:
+      - app-network
+    depends_on:
+      - backend
+      - graphql-engine
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   db_data:

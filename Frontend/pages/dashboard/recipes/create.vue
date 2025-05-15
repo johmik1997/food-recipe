@@ -1,11 +1,18 @@
 <template>
+    <div class="min-h-screen bg-gray-50">
+    <Navbar />
+   
   <div class="max-w-3xl mx-auto p-4 md:p-6">
-    <h1 class="text-3xl font-bold mb-6 text-gray-800">Create New Recipe</h1>
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">
+      <span class="bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
+        Create New Recipe
+      </span>
+    </h1>
 
-    <Form :validation-schema="schema" @submit="submit" class="bg-white rounded-lg shadow-md p-6">
+    <Form :validation-schema="schema" @submit="submit" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
       <div class="space-y-6">
         <!-- Basic Information Section -->
-        <div class="border-b pb-6">
+        <div class="border-b border-gray-200 pb-6">
           <h2 class="text-xl font-semibold mb-4 text-gray-700">Basic Information</h2>
           
           <Field name="title" v-slot="{ field, errorMessage }">
@@ -13,7 +20,7 @@
             <input 
               v-bind="field" 
               type="text" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
               placeholder="e.g. Grandma's Chocolate Chip Cookies"
             />
             <span v-if="errorMessage" class="text-red-500 text-sm mt-1 block">{{ errorMessage }}</span>
@@ -23,145 +30,146 @@
             <label class="block font-medium text-gray-700 mb-1">Description</label>
             <textarea 
               v-bind="field" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
               rows="3"
               placeholder="Tell us about your recipe..."
             ></textarea>
             <span v-if="errorMessage" class="text-red-500 text-sm mt-1 block">{{ errorMessage }}</span>
           </Field>
-          </div>
         </div>
 
         <!-- Time & Servings Section -->
-        <div class="border-b pb-8">
-  <h2 class="text-xl font-semibold mb-6 text-gray-800">Time & Servings</h2>
-  
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <!-- Prep Time -->
-    <div class="space-y-1">
-      <Field name="prep_time" v-slot="{ field, errors, meta }">
-        <label class="block text-sm font-medium text-gray-700">
-          Prep Time (minutes)
-          <span class="text-gray-400 ml-1">optional</span>
-        </label>
-        <div class="relative mt-1">
-          <input 
-            v-bind="field"
-            type="number"
-            class="block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-            placeholder="15"
-            min="0"
-            :class="{
-              'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
-              'border-gray-300': !errors.length
-            }"
-          >
-          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <span class="text-gray-500 sm:text-sm">min</span>
-          </div>
-        </div>
-        <p v-if="errors.length" class="mt-1 text-sm text-red-600">
-          {{ errors[0] }}
-        </p>
-      </Field>
-    </div>
+        <div class="border-b border-gray-200 pb-8">
+          <h2 class="text-xl font-semibold mb-6 text-gray-800">Time & Servings</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Prep Time -->
+            <div class="space-y-1">
+              <Field name="prep_time" v-slot="{ field, errors, meta }">
+                <label class="block text-sm font-medium text-gray-700">
+                  Prep Time (minutes)
+                  <span class="text-gray-400 ml-1">optional</span>
+                </label>
+                <div class="relative mt-1">
+                  <input 
+                    v-bind="field"
+                    type="number"
+                    class="block w-full rounded-lg border-gray-300 shadow-sm py-2.5 px-3 focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                    placeholder="15"
+                    min="0"
+                    :class="{
+                      'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
+                      'border-gray-300': !errors.length
+                    }"
+                  >
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">min</span>
+                  </div>
+                </div>
+                <p v-if="errors.length" class="mt-1 text-sm text-red-600">
+                  {{ errors[0] }}
+                </p>
+              </Field>
+            </div>
 
-    <!-- Cook Time -->
-    <div class="space-y-1">
-      <Field name="cook_time" v-slot="{ field, errors, meta }">
-        <label class="block text-sm font-medium text-gray-700">
-          Cook Time (minutes)
-          <span class="text-gray-400 ml-1">optional</span>
-        </label>
-        <div class="relative mt-1">
-          <input 
-            v-bind="field"
-            type="number"
-            class="block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-            placeholder="30"
-            min="0"
-            :class="{
-              'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
-              'border-gray-300': !errors.length
-            }"
-          >
-          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <span class="text-gray-500 sm:text-sm">min</span>
-          </div>
-        </div>
-        <p v-if="errors.length" class="mt-1 text-sm text-red-600">
-          {{ errors[0] }}
-        </p>
-      </Field>
-    </div>
+            <!-- Cook Time -->
+            <div class="space-y-1">
+              <Field name="cook_time" v-slot="{ field, errors, meta }">
+                <label class="block text-sm font-medium text-gray-700">
+                  Cook Time (minutes)
+                  <span class="text-gray-400 ml-1">optional</span>
+                </label>
+                <div class="relative mt-1">
+                  <input 
+                    v-bind="field"
+                    type="number"
+                    class="block w-full rounded-lg border-gray-300 shadow-sm py-2.5 px-3 focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                    placeholder="30"
+                    min="0"
+                    :class="{
+                      'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
+                      'border-gray-300': !errors.length
+                    }"
+                  >
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">min</span>
+                  </div>
+                </div>
+                <p v-if="errors.length" class="mt-1 text-sm text-red-600">
+                  {{ errors[0] }}
+                </p>
+              </Field>
+            </div>
 
-    <!-- Servings -->
-    <div class="space-y-1">
-      <Field name="servings" v-slot="{ field, errors, meta }">
-        <label class="block text-sm font-medium text-gray-700">
-          Servings
-          <span class="text-red-500">*</span>
-        </label>
-        <div class="relative mt-1">
-          <input 
-            v-bind="field"
-            type="number"
-            class="block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-            placeholder="4"
-            min="1"
-            required
-            :class="{
-              'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
-              'border-gray-300': !errors.length
-            }"
-          >
-          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <span class="text-gray-500 sm:text-sm">people</span>
+            <!-- Servings -->
+            <div class="space-y-1">
+              <Field name="servings" v-slot="{ field, errors, meta }">
+                <label class="block text-sm font-medium text-gray-700">
+                  Servings
+                  <span class="text-red-500">*</span>
+                </label>
+                <div class="relative mt-1">
+                  <input 
+                    v-bind="field"
+                    type="number"
+                    class="block w-full rounded-lg border-gray-300 shadow-sm py-2.5 px-3 focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                    placeholder="4"
+                    min="1"
+                    required
+                    :class="{
+                      'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
+                      'border-gray-300': !errors.length
+                    }"
+                  >
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span class="text-gray-500 sm:text-sm">people</span>
+                  </div>
+                </div>
+                <p v-if="errors.length" class="mt-1 text-sm text-red-600">
+                  {{ errors[0] }}
+                </p>
+              </Field>
+            </div>
           </div>
-        </div>
-        <p v-if="errors.length" class="mt-1 text-sm text-red-600">
-          {{ errors[0] }}
-        </p>
-      </Field>
-    </div>
-    <div class="space-y-1">
-    <Field name="price" v-slot="{ field, errors, meta }">
-      <label class="block text-sm font-medium text-gray-700">
-        Price
-        <span class="text-red-500">*</span>
-      </label>
-      <div class="relative mt-1">
-        <input 
-          v-bind="field"
-          type="number"
-          class="block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-          placeholder="0"
-          min="0"
-          required
-          :class="{
-            'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
-            'border-gray-300': !errors.length
-          }"
-        >
-        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          <span class="text-gray-500 sm:text-sm">birr</span>
-        </div>
-      </div>
-      <p v-if="errors.length" class="mt-1 text-sm text-red-600">
-        {{ errors[0] }}
-      </p>
-    </Field>
-  </div>
-</div>
+
+          <!-- Price Field -->
+          <div class="mt-6 space-y-1">
+            <Field name="price" v-slot="{ field, errors, meta }">
+              <label class="block text-sm font-medium text-gray-700">
+                Price (Birr)
+                <span class="text-red-500">*</span>
+              </label>
+              <div class="relative mt-1">
+                <input 
+                  v-bind="field"
+                  type="number"
+                  class="block w-full rounded-lg border-gray-300 shadow-sm py-2.5 px-3 focus:border-green-500 focus:ring-green-500 sm:text-sm"
+                  placeholder="50"
+                  min="0"
+                  required
+                  :class="{
+                    'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': errors.length,
+                    'border-gray-300': !errors.length
+                  }"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <span class="text-gray-500 sm:text-sm">birr</span>
+                </div>
+              </div>
+              <p v-if="errors.length" class="mt-1 text-sm text-red-600">
+                {{ errors[0] }}
+              </p>
+            </Field>
+          </div>
         </div>
 
         <!-- Category Section -->
-        <div class="border-b pb-6">
+        <div class="border-b border-gray-200 pb-6">
           <Field name="category_id" v-slot="{ field, errorMessage }">
             <label class="block font-medium text-gray-700 mb-1">Category*</label>
             <select 
               v-bind="field" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
               :disabled="categoriesLoading"
               :class="{ 'opacity-50': categoriesLoading }"
             >
@@ -177,13 +185,13 @@
         </div>
 
         <!-- Steps Section -->
-        <div class="border-b pb-6">
+        <div class="border-b border-gray-200 pb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-gray-700">Steps</h2>
             <button 
               type="button" 
               @click="addStep" 
-              class="px-3 py-1 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-sm flex items-center"
+              class="px-3 py-1 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 text-sm flex items-center"
             >
               <PlusIcon class="w-4 h-4 mr-1" />
               Add Step
@@ -205,16 +213,16 @@
             </div>
             
             <input 
-  v-model.number="step.step_number" 
-  type="number" 
-  class="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 mb-3" 
-  min="1"
-  @change="reorderSteps"
-/>
+              v-model.number="step.step_number" 
+              type="number" 
+              class="w-20 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 mb-3" 
+              min="1"
+              @change="reorderSteps"
+            />
             
             <textarea 
               v-model="step.instruction" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 mb-3" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 mb-3" 
               rows="3"
               placeholder="Detailed instructions..."
               required
@@ -222,20 +230,20 @@
             
             <input 
               v-model="step.image_url" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
               placeholder="Optional image URL (e.g., from Imgur)"
             />
           </div>
         </div>
 
         <!-- Ingredients Section -->
-        <div class="border-b pb-6">
+        <div class="border-b border-gray-200 pb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-gray-700">Ingredients</h2>
             <button 
               type="button" 
               @click="addIngredient" 
-              class="px-3 py-1 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-sm flex items-center"
+              class="px-3 py-1 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 text-sm flex items-center"
             >
               <PlusIcon class="w-4 h-4 mr-1" />
               Add Ingredient
@@ -258,7 +266,7 @@
             
             <input 
               v-model="ing.name" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 mb-3" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 mb-3" 
               placeholder="Name* (e.g., Flour)"
               required
             />
@@ -270,7 +278,7 @@
                   v-model.number="ing.quantity" 
                   type="number" 
                   step="0.1" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                   min="0" 
                   placeholder="1.5"
                 />
@@ -279,7 +287,7 @@
                 <label class="block text-sm text-gray-600 mb-1">Unit</label>
                 <input 
                   v-model="ing.unit" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                   placeholder="e.g., cups, grams"
                 />
               </div>
@@ -294,7 +302,7 @@
             <button 
               type="button" 
               @click="addImage" 
-              class="px-3 py-1 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-sm flex items-center"
+              class="px-3 py-1 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 text-sm flex items-center"
             >
               <PlusIcon class="w-4 h-4 mr-1" />
               Add Image
@@ -321,17 +329,17 @@
               type="file" 
               @change="handleImageUpload($event, index)"
               accept="image/jpeg, image/png, image/webp"
-              class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 mb-3"
+              class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 mb-3"
             />
             
             <div v-if="img.previewUrl" class="mt-3 flex flex-col items-center">
-              <img :src="img.previewUrl" class="max-h-48 rounded-md shadow" />
+              <img :src="img.previewUrl" class="max-h-48 rounded-lg shadow" />
               <label class="inline-flex items-center mt-3 cursor-pointer">
                 <input 
                   v-model="img.is_featured" 
                   type="radio" 
                   name="featuredImage"
-                  class="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 mr-2" 
+                  class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 mr-2" 
                   :value="true"
                   @change="setFeaturedImage(index)"
                 />
@@ -344,15 +352,25 @@
         <!-- Submit Button -->
         <div class="pt-4">
           <button 
-  type="submit" 
-  class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
-  :disabled="loading"
->
-  {{ loading ? 'Submitting...' : 'Submit Recipe' }}
-</button>
+            type="submit" 
+            class="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-medium rounded-lg hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="loading"
+          >
+            <span v-if="loading" class="flex items-center justify-center">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Creating Recipe...
+            </span>
+            <span v-else>Create Recipe</span>
+          </button>
+        </div>
       </div>
     </Form>
   </div>
+  <Footer/>
+</div>
 </template>
 
 <script setup>

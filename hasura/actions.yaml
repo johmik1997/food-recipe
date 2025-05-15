@@ -1,0 +1,81 @@
+# Tell Hasura how to invoke each action
+
+actions:
+
+  - name: createRecipe
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: object
+          type: CreateRecipeInput!
+      output_type: RecipeOutput
+    handler: http://backend:3001/create-recipe
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: login
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: email
+          type: String!
+        - name: password
+          type: String!
+      output_type: LoginResponse
+    handler: http://backend:3001/login
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: register
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: input
+          type: RegisterInput!
+      output_type: RegisterResponse
+    handler: http://backend:3001/register
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: uploadProfileImage
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: input
+          type: UploadProfileInput!
+      output_type: UploadImageOutput
+    handler: http://backend:3001/upload-profile-image
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: uploadRecipeImage
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: recipe_id
+          type: uuid!
+        - name: is_featured
+          type: Boolean!
+        - name: base64str
+          type: String!
+        - name: filename
+          type: String!
+      output_type: UploadRecipeImageOutput
+    handler: http://backend:3001/upload-recipe-image
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"

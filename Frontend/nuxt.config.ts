@@ -6,8 +6,16 @@ export default defineNuxtConfig({
   plugins: [
     './plugins/apollo','./plugins/vee-validate'
   ],
+   nitro: {
+    externals: {
+      external: ['tslib']
+    }
+  },
   build: {
     transpile: ['@apollo/client', '@vue/apollo-composable', '@vee-validate/rules', '@vee-validate'],
+  },
+    devServer: {
+    host: '0.0.0.0'
   },
   runtimeConfig: {
     public: {
@@ -38,4 +46,5 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2025-04-22'
+  
 })
