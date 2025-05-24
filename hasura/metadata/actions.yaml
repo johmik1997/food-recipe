@@ -1,21 +1,5 @@
-# Tell Hasura how to invoke each action
 
 actions:
-
-  - name: createRecipe
-    definition:
-      kind: synchronous
-      type: mutation
-      arguments:
-        - name: object
-          type: CreateRecipeInput!
-      output_type: RecipeOutput
-    handler: http://backend:3001/create-recipe
-    forward_client_headers: true
-    headers:
-      - name: x-hasura-admin-secret
-        value: "myadminsecretkey"
-
   - name: login
     definition:
       kind: synchronous
@@ -41,6 +25,62 @@ actions:
           type: RegisterInput!
       output_type: RegisterResponse
     handler: http://backend:3001/register
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: refreshToken
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: refresh_token
+          type: String!
+      output_type: RefreshTokenOutput
+    handler: http://backend:3001/refresh-token
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: createRecipe
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: object
+          type: CreateRecipeInput!
+      output_type: RecipeOutput
+    handler: http://backend:3001/create-recipe
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: updateRecipe
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: input
+          type: UpdateRecipeInput!
+      output_type: RecipeUpdateResponse
+    handler: http://backend:3001/update-recipe
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: deleteRecipe
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: recipe_id
+          type: uuid!
+      output_type: DeleteRecipeResponse
+    handler: http://backend:3001/delete-recipe
     forward_client_headers: true
     headers:
       - name: x-hasura-admin-secret
@@ -75,6 +115,156 @@ actions:
           type: String!
       output_type: UploadRecipeImageOutput
     handler: http://backend:3001/upload-recipe-image
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: setFeaturedImage
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: recipe_id
+          type: uuid!
+        - name: image_id
+          type: uuid!
+      output_type: GenericResponse
+    handler: http://backend:3001/set-featured-image
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: likeRecipe
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: user_id
+          type: uuid!
+        - name: recipe_id
+          type: uuid!
+      output_type: LikeResponse
+    handler: http://backend:3001/like-recipe
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: bookmarkRecipe
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: user_id
+          type: uuid!
+        - name: recipe_id
+          type: uuid!
+      output_type: BookmarkResponse
+    handler: http://backend:3001/bookmark-recipe
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: addComment
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: input
+          type: AddCommentInput!
+      output_type: CommentResponse
+    handler: http://backend:3001/add-comment
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: rateRecipe
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: user_id
+          type: uuid!
+        - name: recipe_id
+          type: uuid!
+        - name: value
+          type: Int!
+      output_type: RatingResponse
+    handler: http://backend:3001/rate-recipe
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: initiatePurchase
+    definition:
+      kind: synchronous
+      type: mutation
+      arguments:
+        - name: user_id
+          type: uuid!
+        - name: recipe_id
+          type: uuid!
+      output_type: PurchaseInitResponse
+    handler: http://backend:3001/initiate-purchase
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: verifyPayment
+    definition:
+      kind: asynchronous
+      type: mutation
+      arguments:
+        - name: input
+          type: ChapaCallbackInput!
+      output_type: GenericResponse
+    handler: http://backend:3001/verify-payment
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: searchRecipes
+    definition:
+      kind: synchronous
+      type: query
+      arguments:
+        - name: input
+          type: SearchInput!
+      output_type: SearchResults
+    handler: http://backend:3001/search-recipes
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: getUserRecipes
+    definition:
+      kind: synchronous
+      type: query
+      arguments:
+        - name: user_id
+          type: uuid!
+      output_type: [UserRecipeSummary!]!
+    handler: http://backend:3001/get-user-recipes
+    forward_client_headers: true
+    headers:
+      - name: x-hasura-admin-secret
+        value: "myadminsecretkey"
+
+  - name: getTrendingRecipes
+    definition:
+      kind: synchronous
+      type: query
+      arguments: []
+      output_type: [TrendingRecipe!]!
+    handler: http://backend:3001/get-trending-recipes
     forward_client_headers: true
     headers:
       - name: x-hasura-admin-secret

@@ -445,7 +445,15 @@ const UPDATE_RECIPE = gql`
 `
 
 // Mutations
-const { mutate: createRecipe } = useMutation(CREATE_RECIPE_MUTATION)
+
+const token = ref(null)
+const { mutate: createRecipe } = useMutation(CREATE_RECIPE_MUTATION,() => ({
+  context: {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+}))
 const { mutate: uploadImage } = useMutation(UPLOAD_IMAGE)
 const { mutate: updateRecipe } = useMutation(UPDATE_RECIPE)
 
@@ -472,11 +480,18 @@ const userId = ref(null)
 
 onMounted(() => {
   const userStr = localStorage.getItem("user")
+  const tokenstr = localStorage.getItem('token')
+
   if (userStr) {
     const user = JSON.parse(userStr)
     userId.value = user.id
   }
+
+  if (tokenstr) {
+    token.value = tokenstr
+  }
 })
+
 
 const handleImageUpload = (event, index) => {
   const file = event.target.files[0]

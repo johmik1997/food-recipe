@@ -7,7 +7,7 @@ export default defineNuxtConfig({
     './plugins/apollo','./plugins/vee-validate'
   ],
   build: {
-    transpile: ['@apollo/client', '@vue/apollo-composable', '@vee-validate/rules', '@vee-validate'],
+    transpile: ['@apollo/client', '@vue/apollo-composable', '@vee-validate/rules', '@vee-validate','ts-invariant/process'],
   },
   runtimeConfig: {
     public: {

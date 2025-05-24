@@ -1,236 +1,74 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"foodrecipe/handlers"
-	"io"
+	"context"
+	"foodrecipe/internal/auth"
+	"foodrecipe/internal/recipe"
+	"foodrecipe/internal/server"
+	"foodrecipe/internal/utils"
 	"log"
-	"math/rand"
 	"net/http"
-	"strings"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/hasura/go-graphql-client"
 )
 
-type PaymentRequest struct {
-	RecipeID    uuid.UUID  `json:"recipe_id"`
-	Amount      float64    `json:"amount"`
-	Currency    string  `json:"currency"`
-	Email       string  `json:"email"`
-	FirstName   string  `json:"first_name"`
-	LastName    string  `json:"last_name"`
-	PhoneNumber string  `json:"phone_number"`
-	SuccessURL  string  `json:"success_url"`
-	ErrorURL    string  `json:"error_url"`
-}
-
-type HasuraRequest struct {
-	Query     string                 `json:"query"`
-	Variables map[string]interface{} `json:"variables"`
-}
-
-type HasuraResponse struct {
-	Data   map[string]interface{} `json:"data"`
-	Errors []struct {
-		Message string `json:"message"`
-	} `json:"errors"`
-}
-
-func getRecipePriceFromHasura(recipeID string) (float64, string, error) {
-	query := `
-		query GetRecipePrice($id: uuid!) {
-			recipes_by_pk(id: $id) {
-				id
-				title
-				price
-			}
-		}
-	`
-
-	variables := map[string]interface{}{
-		"id": recipeID,
+func main() {
+	// Load configuration
+	cfg, err := utils.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	requestBody, _ := json.Marshal(map[string]interface{}{
-		"query":     query,
-		"variables": variables,
+	// Initialize GraphQL client
+	gqlClient := graphql.NewClient(
+		cfg.HasuraEndpoint,
+		http.DefaultClient,
+	).WithRequestModifier(func(r *http.Request) {
+		r.Header.Set("x-hasura-admin-secret", cfg.HasuraAdminSecret)
 	})
 
-	req, err := http.NewRequest("POST", "http://graphql-engine:8080/v1/graphql", strings.NewReader(string(requestBody)))
-	if err != nil {
-		return 0, "", err
+	// Auth setup
+	userClient := auth.NewUserClient(gqlClient)
+	authService := auth.NewService(userClient, cfg)
+	authCfg := &auth.Config{
+		JWTSecret: cfg.JWTSecret,
+	}
+	authHandler := auth.NewHandler(authService, authCfg)
+
+	// Recipe setup
+	recipeClient := recipe.NewRecipeClient(cfg.HasuraEndpoint, cfg.JWTSecret)
+	recipeService := recipe.NewRecipeService(*recipeClient)
+	recipeHandler := recipe.NewRecipeHandler(*recipeService)
+
+	// Create and configure server
+	srv := server.NewServer(cfg, authHandler, recipeHandler)
+	srv.SetupRoutes()
+
+	// Setup graceful shutdown
+	shutdownChan := make(chan os.Signal, 1)
+	signal.Notify(shutdownChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		log.Printf("Server starting on :%s", cfg.HTTPPort)
+		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+
+	// Wait for shutdown signal
+	<-shutdownChan
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server shutdown failed: %v", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-hasura-admin-secret", "myadminsecretkey") // Or use appropriate auth
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return 0, "", err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return 0, "", err
-	}
-
-	var result HasuraResponse
-	if err := json.Unmarshal(body, &result); err != nil {
-		return 0, "", err
-	}
-
-	if len(result.Errors) > 0 {
-		return 0, "", fmt.Errorf("hasura error: %s", result.Errors[0].Message)
-	}
-
-	recipeData, ok := result.Data["recipes_by_pk"].(map[string]interface{})
-	if !ok {
-		return 0, "", fmt.Errorf("recipe not found")
-	}
-
-	price, ok := recipeData["price"].(float64)
-	if !ok {
-		return 0, "", fmt.Errorf("invalid price format")
-	}
-
-	title, _ := recipeData["title"].(string)
-
-	return price, title, nil
-}
-
-func generateTxRef() string {
-	rand.Seed(time.Now().UnixNano())
-	randomNum := rand.Intn(1000000)
-	return fmt.Sprintf("chewatatest-%d", randomNum)
-}
-func handlePayment(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Set("Content-Type", "application/json")
-
-    if r.Method == http.MethodOptions {
-        handleCORS(w, r)
-        return
-    }
-
-    if r.Method != http.MethodPost {
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-        return
-    }
-
-    // Parse the payment request
-    var paymentReq PaymentRequest
-    if err := json.NewDecoder(r.Body).Decode(&paymentReq); err != nil {
-        http.Error(w, "Invalid request body", http.StatusBadRequest)
-        return
-    }
-
-    // Validate required fields
-    if paymentReq.RecipeID == uuid.Nil || paymentReq.Email == "" || 
-       paymentReq.FirstName == "" || paymentReq.LastName == "" || paymentReq.Amount <= 0 {
-        http.Error(w, "Missing required fields or invalid amount", http.StatusBadRequest)
-        return
-    }
-
-    // Get recipe price from Hasura
-    recipePrice, recipeTitle, err := getRecipePriceFromHasura(paymentReq.RecipeID.String())
-    if err != nil {
-        http.Error(w, "Failed to verify recipe: "+err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    // Verify the payment amount matches the recipe price
-    // Verify the payment amount matches the recipe price
-if paymentReq.Amount != recipePrice {
-    http.Error(w, fmt.Sprintf("Payment amount (%.2f) does not match recipe price (%.2f)", 
-        paymentReq.Amount, recipePrice), http.StatusBadRequest)
-    return
-}
-    // Generate a unique transaction reference
-    txRef := generateTxRef()
-
-    // Prepare the payment payload for Chapa
-    payload := strings.NewReader(fmt.Sprintf(`{
-        "amount": "%.2f",
-        "currency": "%s",
-        "email": "%s",
-        "first_name": "%s",
-        "last_name": "%s",
-        "phone_number": "%s",
-        "tx_ref": "%s",
-        "callback_url": "https://your-webhook-url/callback",
-        "return_url": "%s",
-        "customization": {
-            "title": "Purchase: %s",
-            "description": "Recipe purchase"
-        },
-        "meta": {
-            "recipe_id": "%s",
-            "user_email": "%s"
-        }
-    }`,
-        paymentReq.Amount,
-        paymentReq.Currency,
-        paymentReq.Email,
-        paymentReq.FirstName,
-        paymentReq.LastName,
-        paymentReq.PhoneNumber,
-        txRef,
-        paymentReq.SuccessURL,
-        recipeTitle,
-        paymentReq.RecipeID.String(),
-        paymentReq.Email,
-    ))
-
-    // Initialize payment with Chapa
-    req, err := http.NewRequest("POST", "https://api.chapa.co/v1/transaction/initialize", payload)
-    if err != nil {
-        http.Error(w, "Error creating payment request", http.StatusInternalServerError)
-        return
-    }
-
-    req.Header.Add("Authorization", "Bearer CHASECK_TEST-pjjzrYoVZs6KvEXJzvi04kYxx8UsHACN")
-    req.Header.Add("Content-Type", "application/json")
-
-    client := &http.Client{}
-    res, err := client.Do(req)
-    if err != nil {
-        http.Error(w, "Failed to reach payment provider", http.StatusBadGateway)
-        return
-    }
-    defer res.Body.Close()
-
-    body, err := io.ReadAll(res.Body)
-    if err != nil {
-        http.Error(w, "Failed to read payment response", http.StatusInternalServerError)
-        return
-    }
-
-    // Forward the Chapa response directly to client
-    w.WriteHeader(res.StatusCode)
-    w.Write(body)
-}
-
-func handleCORS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-	w.WriteHeader(http.StatusOK)
-}
-
-func main() {
-	http.HandleFunc("/pay", handlePayment)
-	// http.HandleFunc("/payment/callback", handleCallback)
-	// http.HandleFunc("/payment/webhook", handleWebhook)
-	http.HandleFunc("/register", handlers.RegisterHandler)
-http.HandleFunc("/login", handlers.LoginHandler)
-http.HandleFunc("/upload-recipe-image", handlers.UploadRecipeImageHandler)
-http.HandleFunc("/upload-profile-image", handlers.UploadProfileImageHandler)
-http.HandleFunc("/create-recipe", handlers.CreateRecipeHandler)
-
-log.Println("Server listening on port 3001")
-log.Fatal(http.ListenAndServe(":3001", nil))
+	log.Println("Server shut down gracefully.")
 }

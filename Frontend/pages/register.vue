@@ -95,62 +95,84 @@
     </div>
   </div>
 </template>
-
-<script>
-import { defineComponent } from 'vue';
-//import { useMutation } from '@apollo/client/core';
-import gql from 'graphql-tag';
+<script setup>
+import gql from 'graphql-tag'
+import { defineComponent } from 'vue'
+import { useCookie } from '#imports'
 
 const REGISTER_MUTATION = gql`
-  mutation Register($email: String!, $name: String!, $password: String!) {
-    register(input: { email: $email, name: $name, password: $password }) {
+  mutation Register($email: String!,$name: String!,$password: String!) {
+    register(email: $email,name:$name password: $password) {
       token
       user {
-        email
         id
+        email
+        name
       }
     }
   }
-`;
+`
+// Remove the default export and move logic to <script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useApolloClient } from '@vue/apollo-composable'
 
-export default defineComponent({
-  data() {
-    return {
-      loading: false,
-    };
-  },
-  methods: {
-    async handleRegister({ name, email, password, confirmPassword }) {
-      if (password !== confirmPassword) {
-        alert('Passwords do not match!');
-        return;
-      }
+const loading = ref(false)
+const router = useRouter()
+const apolloClient = useApolloClient().client
 
-      this.loading = true;
+async function handleRegister({ email, name, password }) {
+  loading.value = true
 
-      try {
-        const response = await this.$apollo.mutate({
-          mutation: REGISTER_MUTATION,
-          variables: { email, name, password },
-        });
+  try {
+    const response = await apolloClient.mutate({
+      mutation: REGISTER_MUTATION,
+      variables: { email, name, password }
+    })
+    const { data } = response
+    if (data?.register) {
+      // Store token in both cookie and localStorage (fallback)
+      const token = useCookie('auth_token', {
+        maxAge: 60 * 60 * 24 * 7,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      })
+      token.value = data.register.token
+      localStorage.setItem('token', data.register.token)
+      localStorage.setItem('user', JSON.stringify(data.register.user))
+      router.push('/dashboard')
+    }
+  } catch (error) {
+    console.error('Register error:', error)
+    alert(error.message.replace('GraphQL error: ', ''))
+  } finally {
+    loading.value = false
+  }
+}
+    
+// const { mutate: registerUser} = useMutation(REGISTER_MUTATION)
+// const router = useRouter()
+// const authToken = useCookie('auth_token')
 
-        const { data } = response;
-        if (data.register) {
-          console.log('Registration successful', data);
-          alert('Account created successfully');
-          // Optionally, store token and redirect
-        } else {
-          alert('Failed to create account');
-        }
-      } catch (error) {
-        console.error('Registration error:', error);
-        alert('An error occurred while creating the account');
-      } finally {
-        this.loading = false;
-      }
-    },
-  },
-});
+// const handleRegister = async ({ name, email, password, confirmPassword }) => {
+//   if (password.length < 8) return alert('Password must be at least 8 characters')
+//   if (password !== confirmPassword) return alert('Passwords do not match')
+
+//   try {
+//    const { data } = await registerUser({
+     
+//         input: { name, email, password } // Apollo formats this correctly
+ 
+//     })
+
+//     if (data?.register?.token) {
+//       localStorage.setItem('token', data.register.token)
+//       authToken.value = data.register.token
+//       localStorage.setItem('user', JSON.stringify(data.register.user))
+//       router.push('/dashboard')
+//     }
+//   } catch (err) {
+//     alert(err.message.replace('GraphQL error: ', ''))
+//   }
+// }
 </script>
-
-

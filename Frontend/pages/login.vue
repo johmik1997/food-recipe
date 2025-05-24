@@ -66,56 +66,60 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue';
-import gql from 'graphql-tag';
+import { defineComponent } from 'vue'
+import gql from 'graphql-tag'
+
 const LOGIN_MUTATION = gql`
   mutation Login($email: String!, $password: String!) {
     login(email: $email, password: $password) {
       token
       user {
-        email
         id
+        email
+        name
       }
     }
   }
-`;
-
+`
 
 export default defineComponent({
   data() {
     return {
-      loading: false,
-    };
+      loading: false
+    }
   },
   methods: {
     async handleLogin({ email, password }) {
-      this.loading = true;
+      this.loading = true
 
       try {
         const response = await this.$apollo.mutate({
           mutation: LOGIN_MUTATION,
-          variables: { email, password },
-        });
+          variables: { email, password }
+        })
 
-        const { data } = response;
-        if (data.login) {
-          console.log('Login successful', data);
-          alert('Login successful');
-          // Store token in localStorage
-          localStorage.setItem('token', data.login.token);
-          localStorage.setItem('user', JSON.stringify(data.login.user));
-          // Redirect to the dashboard or home page
-          this.$router.push('/dashboard');
-        } else {
-          alert('Invalid credentials');
+        const { data } = response
+        if (data?.login) {
+          // Store token in both cookie and localStorage (fallback)
+          const token = useCookie('auth_token', {
+            maxAge: 60 * 60 * 24 * 7,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+          })
+          token.value = data.login.token
+          localStorage.setItem('token', data.login.token)
+    
+          // Store user data
+          localStorage.setItem('user', JSON.stringify(data.login.user))
+          this.$router.push('/dashboard')
         }
       } catch (error) {
-        console.error('Login error:', error);
-        alert('An error occurred while logging in');
+        console.error('Login error:', error)
+        alert(error.message.replace('GraphQL error: ', ''))
       } finally {
-        this.loading = false;
+        this.loading = false
       }
-    },
-  },
-});
+    }
+  }
+})
 </script>

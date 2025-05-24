@@ -7,6 +7,7 @@ require github.com/golang-jwt/jwt v3.2.2+incompatible
 require (
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
+	github.com/caarlos0/env/v8 v8.0.0 // indirect
 	github.com/cloudinary/cloudinary-go/v2 v2.9.1 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
@@ -25,7 +26,7 @@ require (
 	github.com/gorilla/schema v1.4.1 // indirect
 	github.com/graphql-go/graphql v0.8.1 // indirect
 	github.com/graphql-go/handler v0.2.4 // indirect
-	github.com/hasura/go-graphql-client v0.14.0 // indirect
+	github.com/hasura/go-graphql-client v0.14.3 // indirect
 	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect

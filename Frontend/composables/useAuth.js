@@ -1,47 +1,21 @@
-import { useMutation } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
-
 export const useAuth = () => {
-  const loading = ref(false)
-  const error = ref(null)
-  const token = useCookie('auth-token')
   const router = useRouter()
-
-  const register = async (userData) => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      // Use the mutation with proper context
-      const { mutate } = useMutation(gql`
-        mutation Register($input: RegisterInput!) {
-          register(input: $input) {
-            token
-            user {
-              id
-              email
-            }
-          }
-        }
-      `)
-
-      const result = await mutate({ input: userData })
-      
-      if (result?.data?.register?.token) {
-        token.value = result.data.register.token
-        router.push('/')
-      } else {
-        throw new Error('Registration failed')
-      }
-      
-      return result
-    } catch (err) {
-      error.value = err.message
-      throw err
-    } finally {
-      loading.value = false
-    }
+  
+  const login = async (email, password) => {
+    // Apollo mutation logic here
   }
 
-  return { register, loading, error }
+  const register = async (userData) => {
+    // Apollo mutation logic here  
+  }
+
+  const logout = () => {
+    const token = useCookie('auth_token')
+    token.value = null
+    localStorage.removeItem('token') // Add this
+  localStorage.removeItem('user')  
+    router.push('/login')
+  }
+
+  return { login, register, logout }
 }
