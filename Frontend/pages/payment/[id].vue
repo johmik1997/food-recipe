@@ -139,7 +139,7 @@ const submitPayment = async () => {
     isLoading.value = true
     error.value = ''
 
-    const response = await fetch('http://localhost:3001/pay', {
+    const response = await fetch('http://localhost:3001/api/payments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -2,86 +2,27 @@ package recipe
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/hasura/go-graphql-client"
 )
 
-type (
-	CreateRecipeInput struct {
-		Title            string                 `json:"title"`
-		Description      *string                `json:"description"`
-		PrepTime         *int                   `json:"prep_time"`
-		CookTime         *int                   `json:"cook_time"`
-		Servings         *int                   `json:"servings"`
-		FeaturedImageURL *string                `json:"featured_image_url"`
-		Price            *int                   `json:"price"`
-		UserID           *string                `json:"user_id"`
-		CategoryIDs      []string               `json:"category_ids"`
-		Steps            []RecipeStepInput      `json:"steps"`
-		Ingredients      []RecipeIngredientInput `json:"ingredients"`
-		Images           []RecipeImageInput      `json:"images"`
-	}
-
-	RecipeStepInput struct {
-		StepNumber  int     `json:"step_number"`
-		Instruction string  `json:"instruction"`
-		ImageURL    *string `json:"image_url"`
-	}
-
-	RecipeIngredientInput struct {
-		Name     string   `json:"name"`
-		Quantity *float64 `json:"quantity"`
-		Unit     *string  `json:"unit"`
-	}
-
-	RecipeImageInput struct {
-		ImageURL   string `json:"image_url"`
-		IsFeatured *bool  `json:"is_featured"`
-	}
-
-	RecipeOutput struct {
-		ID               string  `json:"id"`
-		Title            string  `json:"title"`
-		Description      *string `json:"description"`
-		PrepTime         *int    `json:"prep_time"`
-		CookTime         *int    `json:"cook_time"`
-		TotalTime        *int    `json:"total_time"`
-		Servings         *int    `json:"servings"`
-		FeaturedImageURL *string `json:"featured_image_url"`
-		Price            *int    `json:"price"`
-		CreatedAt        string  `json:"created_at"`
-	}
-)
-
-type RecipeClient struct {
-	client *graphql.Client
+type Client struct {
+	gqlClient *graphql.Client
 }
 
-func NewRecipeClient(graphqlURL, JWTSecret string) *RecipeClient {
-	return &RecipeClient{
-		client: graphql.NewClient(graphqlURL, nil).
-			WithRequestModifier(func(r *http.Request) {
-				r.Header.Set("Authorization", "Bearer "+JWTSecret)
-				r.Header.Set("Content-Type", "application/json")
-
-			}),
-	}
+func NewClient(gqlClient *graphql.Client) *Client {
+	return &Client{gqlClient: gqlClient}
 }
 
-func (c *RecipeClient) CreateRecipe(ctx context.Context, input CreateRecipeInput) (*RecipeOutput, error) {
+func (c *Client) CreateRecipe(ctx context.Context, input CreateRecipeInput, userID string) (*Recipe, error) {
 	var mutation struct {
-		CreateRecipe RecipeOutput `graphql:"createRecipe(object: $object)"`
-	}
-
-	vars := map[string]interface{}{
-		"object": input,
-	}
-
-	err := c.client.Mutate(ctx, &mutation, vars)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create recipe: %w", err)
+		InsertRecipes struct {
+			Returning []struct {
+				ID string `graphql:"id"`
+			} `graphql:"returning"`
+		} `graphql:"insert_recipes(objects: $recipe)"`
 	}
 
 	// Calculate total time
@@ -92,7 +33,118 @@ func (c *RecipeClient) CreateRecipe(ctx context.Context, input CreateRecipeInput
 	if input.CookTime != nil {
 		totalTime += *input.CookTime
 	}
-	mutation.CreateRecipe.TotalTime = &totalTime
 
-	return &mutation.CreateRecipe, nil
+	recipeInput := map[string]interface{}{
+		"title":            input.Title,
+		"description":      input.Description,
+		"prep_time":        input.PrepTime,
+		"cook_time":        input.CookTime,
+		"total_time":       totalTime,
+		"servings":         input.Servings,
+		"price":            input.Price,
+		"user_id":          userID,
+		"featured_image_url": nil,
+	}
+
+	err := c.gqlClient.Mutate(ctx, &mutation, map[string]interface{}{
+		"recipe": recipeInput,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create recipe: %w", err)
+	}
+
+	if len(mutation.InsertRecipes.Returning) == 0 {
+		return nil, errors.New("no recipe created")
+	}
+
+	recipeID := mutation.InsertRecipes.Returning[0].ID
+
+	// Create categories
+	if len(input.CategoryIDs) > 0 {
+		var categoryMutation struct {
+			InsertRecipeCategories struct {
+				AffectedRows int `graphql:"affected_rows"`
+			} `graphql:"insert_recipe_categories(objects: $categories)"`
+		}
+
+		categories := make([]map[string]interface{}, len(input.CategoryIDs))
+		for i, catID := range input.CategoryIDs {
+			categories[i] = map[string]interface{}{
+				"recipe_id":   recipeID,
+				"category_id": catID,
+			}
+		}
+
+		err = c.gqlClient.Mutate(ctx, &categoryMutation, map[string]interface{}{
+			"categories": categories,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create recipe categories: %w", err)
+		}
+	}
+
+	// Create steps
+	if len(input.Steps) > 0 {
+		var stepMutation struct {
+			InsertRecipeSteps struct {
+				AffectedRows int `graphql:"affected_rows"`
+			} `graphql:"insert_recipe_steps(objects: $steps)"`
+		}
+
+		steps := make([]map[string]interface{}, len(input.Steps))
+		for i, step := range input.Steps {
+			steps[i] = map[string]interface{}{
+				"recipe_id":   recipeID,
+				"step_number": step.StepNumber,
+				"instruction": step.Instruction,
+				"image_url":   step.ImageURL,
+			}
+		}
+
+		err = c.gqlClient.Mutate(ctx, &stepMutation, map[string]interface{}{
+			"steps": steps,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create recipe steps: %w", err)
+		}
+	}
+
+	// Create ingredients
+	if len(input.Ingredients) > 0 {
+		var ingredientMutation struct {
+			InsertRecipeIngredients struct {
+				AffectedRows int `graphql:"affected_rows"`
+			} `graphql:"insert_recipe_ingredients(objects: $ingredients)"`
+		}
+
+		ingredients := make([]map[string]interface{}, len(input.Ingredients))
+		for i, ing := range input.Ingredients {
+			ingredients[i] = map[string]interface{}{
+				"recipe_id": recipeID,
+				"name":      ing.Name,
+				"quantity":  ing.Quantity,
+				"unit":      ing.Unit,
+			}
+		}
+
+		err = c.gqlClient.Mutate(ctx, &ingredientMutation, map[string]interface{}{
+			"ingredients": ingredients,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create recipe ingredients: %w", err)
+		}
+	}
+
+	return &Recipe{
+		ID:               recipeID,
+		Title:            input.Title,
+		Description:      input.Description,
+		PrepTime:         input.PrepTime,
+		CookTime:         input.CookTime,
+		TotalTime:        &totalTime,
+		Servings:         input.Servings,
+		Price:            input.Price,
+		UserID:           userID,
+		FeaturedImageURL: nil,
+	}, nil
 }

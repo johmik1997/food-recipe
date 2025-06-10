@@ -235,7 +235,7 @@ const { result: recentResult, loading: recentLoading } = useQuery(gql`
       cook_time
       total_time
       servings
-      featured_image_url
+      feature_image_url
       created_at
       user_likes_aggregate {
         aggregate {
@@ -278,7 +278,7 @@ const { result: popularResult, loading: popularLoading } = useQuery(gql`
       cook_time
       total_time
       servings
-      featured_image_url
+      feature_image_url
       created_at
       user_likes_aggregate {
         aggregate {
@@ -321,7 +321,7 @@ const { result: favoriteResult, loading: favoriteLoading } = useQuery(gql`
       cook_time
       total_time
       servings
-      featured_image_url
+      feature_image_url
       created_at
       user_likes_aggregate {
         aggregate {
@@ -400,7 +400,7 @@ const stats = computed(() => [
 const handleStatClick = (action) => {
   switch (action) {
     case 'viewRecipes':
-      navigateTo('/dashboard/my-recipes')
+      navigateTo('/dashboard/my-recipe')
       break
     case 'viewLikes':
       navigateTo('/dashboard/likes')

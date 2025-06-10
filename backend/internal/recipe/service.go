@@ -2,38 +2,40 @@ package recipe
 
 import (
 	"context"
-	"foodrecipe/internal/utils"
+	"errors"
+
+	"github.com/google/uuid"
 )
 
-type RecipeService struct {
-	recipeClient RecipeClient
+type Service struct {
+	client *Client
 }
 
-func NewRecipeService(recipeClient RecipeClient) *RecipeService {
-	return &RecipeService{
-		recipeClient: recipeClient,
-	}
+func NewService(client *Client) *Service {
+	return &Service{client: client}
 }
 
-func (s *RecipeService) CreateRecipe(ctx context.Context, input CreateRecipeInput) (RecipeOutput, error) {
-	// Validate required fields
+func (s *Service) CreateRecipe(ctx context.Context, input CreateRecipeInput, userID string) (*Recipe, error) {
+	// Validate input
 	if input.Title == "" {
-		return RecipeOutput{}, utils.NewValidationError("title is required")
+		return nil, errors.New("title is required")
 	}
 	if len(input.Steps) == 0 {
-		return RecipeOutput{}, utils.NewValidationError("at least one step is required")
+		return nil, errors.New("at least one step is required")
 	}
 	if len(input.Ingredients) == 0 {
-		return RecipeOutput{}, utils.NewValidationError("at least one ingredient is required")
+		return nil, errors.New("at least one ingredient is required")
 	}
-	if input.UserID == nil {
-		return RecipeOutput{}, utils.NewValidationError("user_id is required")
+	if len(input.CategoryIDs) == 0 {
+		return nil, errors.New("at least one category is required")
+	}
+	
+	// Validate category IDs
+	for _, catID := range input.CategoryIDs {
+		if _, err := uuid.Parse(catID); err != nil {
+			return nil, errors.New("invalid category ID format")
+		}
 	}
 
-	// Create recipe via GraphQL
-	result, err := s.recipeClient.CreateRecipe(ctx, input)
-	if err != nil {
-		return RecipeOutput{}, err
-	}
-	return *result, nil
+	return s.client.CreateRecipe(ctx, input, userID)
 }

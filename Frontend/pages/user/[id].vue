@@ -77,7 +77,7 @@ const GET_RECIPES_BY_USER = gql`
       description
       prep_time
       cook_time
-      featured_image_url
+      feature_image_url
       user {
         name
         avatar_image_url

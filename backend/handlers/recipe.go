@@ -110,7 +110,7 @@ mutation {
 	id
 	created_at
   }
-
+  %s
   %s
   %s
   %s
@@ -124,6 +124,7 @@ mutation {
 		nullOrStr(input.FeaturedImageURL),
 		nullOrInt(input.Price),
 		nullOrStr(input.UserID),
+		buildCategoryInsert(recipeID,input.CategoryIDs),
 		buildStepsInsert(recipeID, input.Steps),
 		buildIngredientsInsert(recipeID, input.Ingredients),
 		buildImagesInsert(recipeID, input.Images),

@@ -95,7 +95,7 @@ const UPLOAD_PROFILE_IMAGE = gql`
     uploadProfileImage(input: $input) {
       success
       message
-      avatar_image_url
+      image_url
     }
   }
 `
@@ -184,9 +184,13 @@ onError((error) => {
 onDone((result) => {
   if (result.data?.uploadProfileImage?.success) {
     const response = result.data.uploadProfileImage
+    console.log("Upload successful:", response)
+    if(response.success==true) {
+      console.log("Profile picture updated successfully:", response.avatar_image_url)
+    
     successMessage.value = response.message || 'Profile picture updated successfully'
     currentUser.value.avatar_image_url = response.avatar_image_url
-    
+    }
     // Update local storage
     const userData = JSON.parse(localStorage.getItem('user') || '{}')
     userData.avatar_image_url = response.avatar_image_url

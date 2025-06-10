@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeNest Solutions</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --secondary: #6366f1;
+      --bg: #f9fafb;
+      --text: #111827;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    header strong {
+      font-size: 1.5rem;
+    }
+
+    nav a {
+      color: white;
+      margin-left: 20px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    nav a:hover {
+      color: #e0e7ff;
+    }
+
+    main {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem;
+    }
+
+    section {
+      margin-bottom: 3rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    h1, h2 {
+      color: var(--primary);
+    }
+
+    form {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .form-control {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: var(--secondary);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background: #e5e7eb;
+      font-size: 0.9rem;
+    }
+
+    pre {
+      background-color: #1e293b;
+      color: #f8fafc;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+
+    a {
+      color: var(--primary);
+    }
+
+    ul {
+      padding-left: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div><strong>CodeNest Solutions</strong></div>
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+      <a href="#vacancy">Vacancies</a>
+      <a href="#news">News</a>
+      <a href="#coding">Coding</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home">
+      <h1>Welcome to CodeNest Solutions</h1>
+      <p>Empowering startups and enterprises through tailored software development. We transform your business ideas into real-world applications.</p>
+      <h2>Why Choose Us?</h2>
+      <p>With a dedicated team of developers, designers, and strategists, we deliver scalable and user-friendly solutions.</p>
+    </section>
+
+    <section id="contact">
+      <h1>Contact Us</h1>
+      <p>We would love to hear from you. Whether you're a client or just curious, drop us a line!</p>
+      <form>
+        <div class="form-control">
+          <label>Name:</label>
+          <input type="text" placeholder="Your name">
+        </div>
+        <div class="form-control">
+          <label>Email:</label>
+          <input type="email" placeholder="Your email">
+        </div>
+        <div class="form-control">
+          <label>Message:</label>
+          <textarea placeholder="Your message"></textarea>
+        </div>
+        <button type="submit">Submit</button>
+      </form>
+      <p>Follow us on:
+        <a href="#">Twitter</a>, <a href="#">LinkedIn</a>, <a href="#">Instagram</a>
+      </p>
+    </section>
+
+    <section id="about">
+      <h1>About CodeNest</h1>
+      <p>Founded in 2022, CodeNest Solutions began as a vision to bridge the gap between businesses and technology. We believe that great code solves real problems and builds real connections.</p>
+      <h2>Our Mission</h2>
+      <p>To innovate, deliver, and educate through technology while staying true to our core values: integrity, creativity, and commitment.</p>
+      <h2>Our Team</h2>
+      <p>Meet the minds behind the mission: passionate developers, creative designers, and analytical project managers all working toward your success.</p>
+    </section>
+
+    <section id="vacancy">
+      <h1>Join Our Team</h1>
+      <p>We’re always looking for passionate individuals who want to make an impact through technology. Check out our current openings:</p>
+      <ul>
+        <li><strong>Frontend Developer</strong> - React/Vue experience preferred</li>
+        <li><strong>Backend Engineer</strong> - Proficient in Go/Python</li>
+        <li><strong>UI/UX Designer</strong> - Creative and user-focused</li>
+      </ul>
+    </section>
+
+    <section id="news">
+      <h1>Latest News</h1>
+      <p>✨ CodeNest won the "Innovative Startup of the Year 2024" award!</p>
+      <p>🧠 Our team is attending WebSummit Lisbon this fall – meet us there!</p>
+      <p>🚀 We’ve launched our new SaaS product: NestCRM – Your customer, reimagined.</p>
+    </section>
+
+    <section id="coding">
+      <h1>Featured Code Snippet</h1>
+      <pre><code>// Fibonacci in Go
+func Fibonacci(n int) int {
+  if n <= 1 {
+    return n
+  }
+  return Fibonacci(n-1) + Fibonacci(n-2)
+}</code></pre>
+      <p>This snippet defines a recursive function <strong>Fibonacci</strong> that returns the <em>n<sup>th</sup></em> number in the Fibonacci sequence.</p>
+      <blockquote>“Programming isn't about what you know; it's about what you can figure out.” – Chris Pine, <em>Learn to Program</em></blockquote>
+      <p><strong>ACRONYM:</strong> FIB – Functionally Integrated Block (made up definition)</p>
+      <p><mark>Note:</mark> Recursive functions are elegant but can lead to performance issues if not handled carefully (e.g., through memoization).</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 CodeNest Solutions. All rights reserved.</p>
+  </footer>
+</body>
+</html>

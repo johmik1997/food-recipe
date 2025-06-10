@@ -364,7 +364,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Form, Field } from 'vee-validate'
 import * as yup from 'yup'
@@ -395,7 +395,7 @@ const form = ref({
   cook_time: null,
   servings: null,
   category_id: '',
-  price:null
+  price: null
 })
 
 const steps = ref([])
@@ -414,7 +414,7 @@ const GET_RECIPE = gql`
       prep_time
       cook_time
       servings
-      featured_image_url
+      feature_image_url
       price
       recipe_categories {
         category {
@@ -490,7 +490,7 @@ const UPDATE_RECIPE = gql`
     }
     
     insert_recipe_categories_one(object: {recipe_id: $id, category_id: $category_id}) {
-      id
+      category_id
     }
   }
 `
@@ -517,19 +517,9 @@ const UPDATE_STEPS = gql`
   }
 `
 
-const UPLOAD_IMAGE = gql`
-  mutation UploadRecipeImage(
-    $recipe_id: uuid!
-    $is_featured: Boolean!
-    $base64str: String!
-    $filename: String!
-  ) {
-    uploadRecipeImage(
-      recipe_id: $recipe_id
-      is_featured: $is_featured
-      base64str: $base64str
-      filename: $filename
-    ) {
+const UPLOAD_RECIPE_IMAGE = gql`
+  mutation UploadRecipeImage($input: UploadRecipeImageInput!) {
+    uploadRecipeImage(input: $input) {
       success
       message
       image_url
@@ -545,18 +535,6 @@ const DELETE_IMAGE = gql`
   }
 `
 
-const UPDATE_FEATURED_IMAGE = gql`
-  mutation UpdateFeaturedImage($id: uuid!, $featured_image_url: String!) {
-    update_recipes_by_pk(
-      pk_columns: {id: $id}
-      _set: {featured_image_url: $featured_image_url}
-    ) {
-      id
-      featured_image_url
-    }
-  }
-`
-
 // Fetch recipe data
 const { result: recipeResult, loading: recipeLoading } = useQuery(
   GET_RECIPE,
@@ -565,6 +543,7 @@ const { result: recipeResult, loading: recipeLoading } = useQuery(
 
 // Fetch categories
 const { result: categoriesResult, loading: categoriesLoading } = useQuery(GET_CATEGORIES)
+const { mutate: uploadRecipeImageMutation } = useMutation(UPLOAD_RECIPE_IMAGE)
 
 const categories = computed(() => categoriesResult.value?.categories || [])
 
@@ -614,9 +593,7 @@ watch(recipeResult, (result) => {
 const { mutate: updateRecipe } = useMutation(UPDATE_RECIPE)
 const { mutate: updateIngredients } = useMutation(UPDATE_INGREDIENTS)
 const { mutate: updateSteps } = useMutation(UPDATE_STEPS)
-const { mutate: uploadImage } = useMutation(UPLOAD_IMAGE)
 const { mutate: deleteImage } = useMutation(DELETE_IMAGE)
-const { mutate: updateFeaturedImage } = useMutation(UPDATE_FEATURED_IMAGE)
 
 // Helper methods
 const addStep = () => {
@@ -684,37 +661,14 @@ const removeImage = async (index) => {
   if (wasFeatured && images.value.length > 0) {
     // Set the first remaining image as featured
     images.value[0].is_featured = true
-    
-    // Update featured image in database if it's an existing image
-    if (images.value[0].id) {
-      try {
-        await updateFeaturedImage({
-          id: recipeId,
-          featured_image_url: images.value[0].previewUrl
-        })
-      } catch (err) {
-        console.error('Error updating featured image:', err)
-      }
-    }
   }
 }
 
-const setFeaturedImage = async (index) => {
+const setFeaturedImage = (index) => {
+  // Unset all other featured images
   images.value.forEach((img, i) => {
     img.is_featured = i === index
   })
-  
-  // Update featured image in database
-  if (images.value[index].id || images.value[index].previewUrl) {
-    try {
-      await updateFeaturedImage({
-        id: recipeId,
-        featured_image_url: images.value[index].previewUrl
-      })
-    } catch (err) {
-      console.error('Error updating featured image:', err)
-    }
-  }
 }
 
 const handleImageUpload = (event, index) => {
@@ -832,14 +786,9 @@ const submit = async (values) => {
     }
 
     // 4. Handle images
-    let featuredImageUrl = null
-    
     for (const [index, img] of images.value.entries()) {
       // Skip if this is an existing image that wasn't changed
       if (img.id && !img.file) {
-        if (img.is_featured) {
-          featuredImageUrl = img.previewUrl
-        }
         continue
       }
       
@@ -849,38 +798,22 @@ const submit = async (values) => {
       try {
         const base64str = await toBase64(img.file)
         const filename = `${Date.now()}_${img.file.name.replace(/\s+/g, '_')}`
-
-        const { data: uploadData, errors: uploadErrors } = await uploadImage({
-          recipe_id: recipeId,
-          is_featured: img.is_featured,
-          base64str,
-          filename
+console.log("the feature is",img.is_featured)
+        const { data: uploadData, errors: uploadErrors } = await uploadRecipeImageMutation({
+          input: {
+            recipe_id: recipeId,
+            is_featured: img.is_featured,
+            base64str,
+            filename
+          }
         })
 
         if (uploadErrors) {
           console.error(`Error uploading image ${index + 1}:`, uploadErrors[0].message)
           continue
         }
-
-        if (uploadData?.uploadRecipeImage?.image_url) {
-          if (img.is_featured) {
-            featuredImageUrl = uploadData.uploadRecipeImage.image_url
-          }
-        }
       } catch (err) {
         console.error(`Error uploading image ${index + 1}:`, err)
-      }
-    }
-
-    // 5. Update featured image if needed
-    if (featuredImageUrl) {
-      try {
-        await updateFeaturedImage({
-          id: recipeId,
-          featured_image_url: featuredImageUrl
-        })
-      } catch (err) {
-        console.error('Error updating featured image:', err)
       }
     }
 

@@ -1,23 +1,38 @@
 package auth
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/hasura/go-graphql-client"
 )
 
 var ErrUserNotFound = errors.New("user not found")
 
 type UserClient struct {
-    client *graphql.Client
+	client *graphql.Client
+	// http client for raw requests
+	httpClient *http.Client
+	// hasura url
+	url string
+	// hasura admin secret
+	adminSecret string
 }
 
-func NewUserClient(client *graphql.Client) *UserClient {
+func NewUserClient(client *graphql.Client, url, adminSecret string) *UserClient {
 	return &UserClient{
-		client: client,
+		client:      client,
+		httpClient:  &http.Client{},
+		url:         url,
+		adminSecret: adminSecret,
 	}
 }
 
@@ -187,4 +202,49 @@ func (c *UserClient) CreateUser(ctx context.Context, name, email, password strin
         Email: mutation.InsertUser.Email,
         Name:  mutation.InsertUser.Name,
     }, nil
+}
+
+func (c *UserClient) UpdateUserAvatar(userID uuid.UUID, avatarURL string) error {
+	mutation := `mutation UpdateUserAvatar($user_id: uuid!, $avatar_url: String!) {
+		update_users_by_pk(pk_columns: {id: $user_id}, _set: {avatar_image_url: $avatar_url}) {
+			id
+		}
+	}`
+
+	reqBody, err := json.Marshal(map[string]interface{}{
+		"query": mutation,
+		"variables": map[string]interface{}{
+			"user_id":    userID,
+			"avatar_url": avatarURL,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", c.url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-hasura-admin-secret", c.adminSecret)
+
+	log.Printf("Sending GraphQL mutation with user_id=%s", userID)
+	log.Printf("Avatar URL: %s", avatarURL)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	req = req.WithContext(ctx)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("hasura update failed with status code: %d", resp.StatusCode)
+	}
+
+	return nil
 }

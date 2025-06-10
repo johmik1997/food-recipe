@@ -21,10 +21,17 @@ func GenerateJWT(userID, email string, secret []byte) (string, error) {
 	return token.SignedString(secret)
 }
 
+
+
 func ValidateJWT(tokenString string, secret []byte) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate the alg is what you expect
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
 		return secret, nil
 	})
+	
 	if err != nil {
 		return nil, err
 	}
@@ -32,6 +39,7 @@ func ValidateJWT(tokenString string, secret []byte) (jwt.MapClaims, error) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, nil
 	}
+	
 	return nil, jwt.ErrInvalidKey
 }
 // utils/jwt.go

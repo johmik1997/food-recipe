@@ -65,9 +65,16 @@
   </div>
 </template>
 
-<script>
-import { defineComponent } from 'vue'
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useApolloClient } from '@vue/apollo-composable'
+import { useCookie } from '#imports'
 import gql from 'graphql-tag'
+
+const router = useRouter()
+const { client } = useApolloClient()
+const loading = ref(false)
 
 const LOGIN_MUTATION = gql`
   mutation Login($email: String!, $password: String!) {
@@ -82,44 +89,32 @@ const LOGIN_MUTATION = gql`
   }
 `
 
-export default defineComponent({
-  data() {
-    return {
-      loading: false
-    }
-  },
-  methods: {
-    async handleLogin({ email, password }) {
-      this.loading = true
+async function handleLogin({ email, password }) {
+  loading.value = true
+  try {
+    const response = await client.mutate({
+      mutation: LOGIN_MUTATION,
+      variables: { email, password }
+    })
 
-      try {
-        const response = await this.$apollo.mutate({
-          mutation: LOGIN_MUTATION,
-          variables: { email, password }
-        })
-
-        const { data } = response
-        if (data?.login) {
-          // Store token in both cookie and localStorage (fallback)
-          const token = useCookie('auth_token', {
-            maxAge: 60 * 60 * 24 * 7,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict'
-          })
-          token.value = data.login.token
-          localStorage.setItem('token', data.login.token)
-    
-          // Store user data
-          localStorage.setItem('user', JSON.stringify(data.login.user))
-          this.$router.push('/dashboard')
-        }
-      } catch (error) {
-        console.error('Login error:', error)
-        alert(error.message.replace('GraphQL error: ', ''))
-      } finally {
-        this.loading = false
-      }
+    const { data } = response
+    if (data?.login) {
+      const token = useCookie('auth_token', {
+        maxAge: 60 * 60 * 24 * 7,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      })
+      token.value = data.login.token
+      localStorage.setItem('token', data.login.token)
+      localStorage.setItem('user', JSON.stringify(data.login.user))
+      router.push('/dashboard')
     }
+  } catch (error) {
+    console.error('Login error:', error)
+    alert(error.message.replace('GraphQL error: ', ''))
+  } finally {
+    loading.value = false
   }
-})
+}
 </script>
+

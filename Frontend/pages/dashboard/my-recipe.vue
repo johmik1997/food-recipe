@@ -66,7 +66,7 @@
           >
             <NuxtLink :to="`/recipes/${recipe.id}`">
               <img 
-                :src="recipe.featured_image_url || '/placeholder-recipe.jpg'" 
+                :src="recipe.feature_image_url || '/placeholder-recipe.jpg'" 
                 :alt="recipe.title"
                 class="w-full h-48 object-cover"
               >
@@ -151,7 +151,7 @@ const GET_MY_RECIPES = gql`
     recipes(where: {user: {id: {_eq: $userId}}}) {
       id
       title
-      featured_image_url
+      feature_image_url
       description
       prep_time
       cook_time

@@ -1,48 +1,86 @@
-// package imageupload/handler.go
 package uploadimage
 
 import (
+	"bytes"
 	"encoding/json"
+	"foodrecipe/internal/utils"
+	"io"
+	"log"
 	"net/http"
-	"github.com/cloudinary/cloudinary-go/v2"
 )
 
 type Handler struct {
 	service *Service
 }
+type HasuraActionRequest struct {
+	Input struct {
+		Input UploadProfileImageInput `json:"input"`
+	} `json:"input"`
+}
+
+
 
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
-
-type UploadRequest struct {
-	Input struct {
-		RecipeID   string `json:"recipe_id"`
-		Base64Str  string `json:"base64str"`
-		Filename   string `json:"filename"`
-		IsFeatured bool   `json:"is_featured"`
-	} `json:"input"`
+type UploadProfileImageRequest struct {
+	Input UploadProfileImageInput `json:"input"`
 }
 
-func (h *Handler) UploadRecipeImage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+type UploadProfileImageInput struct {
+	UserID    string `json:"userId"`
+	Base64Str string `json:"base64str"`
+	Filename  string `json:"filename"`
+}
+func (h *Handler) UploadProfileImage(w http.ResponseWriter, r *http.Request) {
+	var req HasuraActionRequest
 
-	var req UploadRequest
+	bodyBytes, _ := io.ReadAll(r.Body)
+	log.Printf("Raw request body: %s", string(bodyBytes))
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Reset
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"message":"invalid request"}`, http.StatusBadRequest)
+		utils.WriteJSONError(w, http.StatusBadRequest, "Invalid JSON: "+err.Error())
 		return
 	}
 
-	result, err := h.service.UploadRecipeImage(r.Context(), UploadInput{
-		RecipeID:    req.Input.RecipeID,
-		Base64Str:   req.Input.Base64Str,
-		Filename:    req.Input.Filename,
-		IsFeatured:  req.Input.IsFeatured,
-	})
+	input := req.Input.Input
+	log.Printf("Received UploadProfileImage input: %+v", input)
+
+	if input.UserID == "" {
+		utils.WriteJSONError(w, http.StatusBadRequest, "userId is required")
+		return
+	}
+	if input.Base64Str == "" {
+		utils.WriteJSONError(w, http.StatusBadRequest, "base64str is required")
+		return
+	}
+	if input.Filename == "" {
+		utils.WriteJSONError(w, http.StatusBadRequest, "filename is required")
+		return
+	}
+
+	uploadInput := UploadProfileInput{
+		UserID:    input.UserID,
+		Base64Str: input.Base64Str,
+		Filename:  input.Filename,
+	}
+
+	result, err := h.service.UploadProfileImage(uploadInput)
 	if err != nil {
-		http.Error(w, `{"message":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		log.Printf("Upload profile image error: %v", err)
+		utils.WriteJSONError(w, http.StatusInternalServerError, "Failed to upload profile image")
 		return
 	}
 
-	json.NewEncoder(w).Encode(result)
+response := map[string]interface{}{
+	"success":          result.Success,
+	"message":          result.Message,
+	"avatar_image_url": result.ImageURL,
 }
+
+
+	utils.WriteJSON(w, http.StatusOK, response)
+}
+
+

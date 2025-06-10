@@ -98,7 +98,7 @@ const { result: likedRecipesResult, loading: queryLoading } = useQuery(gql`
         cook_time
         total_time
         servings
-        featured_image_url
+        feature_image_url
         created_at
         user {
           id

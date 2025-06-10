@@ -22,9 +22,9 @@ export default defineNuxtPlugin((nuxtApp) => {
     operation.setContext(({ headers = {} }) => ({
       headers: {
       ...headers,
-      'x-hasura-admin-secret': 'myadminsecretkey',
       'content-type': 'application/json',
-      'authorization': token ? `Bearer ${token}` : '',
+      'x-hasura-admin-secret': 'myadminsecretkey',
+      'authorization': `Bearer ${token}`,
       }
     }))
     

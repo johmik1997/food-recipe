@@ -45,9 +45,9 @@
         </div>
 
         <!-- Featured image -->
-        <div v-if="recipe.featured_image_url" class="rounded-xl overflow-hidden shadow-lg">
+        <div v-if="recipe.feature_image_url" class="rounded-xl overflow-hidden shadow-lg">
           <img 
-            :src="recipe.featured_image_url" 
+            :src="recipe.feature_image_url" 
             :alt="recipe.title" 
             class="w-full h-96 object-cover"
             loading="lazy"
@@ -306,7 +306,7 @@ const GET_RECIPE_BY_ID = gql`
       prep_time
       cook_time
       servings
-      featured_image_url
+      feature_image_url
       created_at
       user {
         id

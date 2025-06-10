@@ -1,4 +1,5 @@
 package utils
+
 import "fmt"
 
 // NewValidationError creates a new error with the given validation message.
@@ -12,4 +13,10 @@ type ValidationError struct {
 
 func (e *ValidationError) Error() string {
     return e.Message
+}
+func WrapError(context string, err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%s: %w", context, err)
 }

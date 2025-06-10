@@ -64,7 +64,7 @@
         prep_time
         cook_time
         servings
-        featured_image_url
+        feature_image_url
         user {
           name
           avatar_image_url

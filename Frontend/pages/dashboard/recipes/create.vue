@@ -372,7 +372,6 @@
   <Footer/>
 </div>
 </template>
-
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { Form, Field } from 'vee-validate'
@@ -380,7 +379,8 @@ import * as yup from 'yup'
 import { useRouter } from 'vue-router'
 import gql from 'graphql-tag'
 import { useMutation, useQuery } from '@vue/apollo-composable'
-import { PlusIcon, TrashIcon} from '@heroicons/vue/outline'
+import { PlusIcon, TrashIcon } from '@heroicons/vue/outline'
+
 const router = useRouter()
 
 // Schema validation
@@ -390,7 +390,7 @@ const schema = yup.object({
   prep_time: yup.number().min(0).max(999, 'Prep time seems too long').nullable(),
   cook_time: yup.number().min(0).max(999, 'Cook time seems too long').nullable(),
   servings: yup.number().min(1).max(100, 'Servings must be less than 100').required('Servings is required'),
-  price: yup.number().min(0).max(9999, 'Price must be less than 9999'),
+  price: yup.number().min(0).max(9999, 'Price must be less than 9999').required('Price is required'),
   category_id: yup.string().required('Category is required')
 })
 
@@ -398,33 +398,64 @@ const schema = yup.object({
 const steps = ref([{ step_number: 1, instruction: '', image_url: '' }])
 const ingredients = ref([{ name: '', quantity: null, unit: '' }])
 const images = ref([{ file: null, previewUrl: '', is_featured: true }])
+const loading = ref(false)
 
-// GraphQL Queries
-const CREATE_RECIPE_MUTATION = gql`
-  mutation CreateRecipe($object: CreateRecipeInput!) {
-    createRecipe(object: $object) {
+// GraphQL Mutations
+const INSERT_RECIPE = gql`
+  mutation InsertRecipe(
+    $title: String!
+    $description: String
+    $prep_time: Int
+    $cook_time: Int
+    $servings: Int!
+    $price: Int!
+    $user_id: uuid!
+  ) {
+    insert_recipes_one(object: {
+      title: $title
+      description: $description
+      prep_time: $prep_time
+      cook_time: $cook_time
+      servings: $servings
+      price: $price
+      user_id: $user_id
+    }) {
       id
       title
-      total_time
-      featured_image_url
-      price
     }
   }
 `
 
-const UPLOAD_IMAGE = gql`
-  mutation UploadRecipeImage(
-    $recipe_id: uuid!
-    $is_featured: Boolean!
-    $base64str: String!
-    $filename: String!
-  ) {
-    uploadRecipeImage(
+const INSERT_RECIPE_CATEGORY = gql`
+  mutation InsertRecipeCategory($recipe_id: uuid!, $category_id: uuid!) {
+    insert_recipe_categories_one(object: {
       recipe_id: $recipe_id
-      is_featured: $is_featured
-      base64str: $base64str
-      filename: $filename
-    ) {
+      category_id: $category_id
+    }) {
+      category_id
+    }
+  }
+`
+
+const INSERT_RECIPE_STEPS = gql`
+  mutation InsertRecipeSteps($objects: [recipe_steps_insert_input!]!) {
+    insert_recipe_steps(objects: $objects) {
+      affected_rows
+    }
+  }
+`
+
+const INSERT_RECIPE_INGREDIENTS = gql`
+  mutation InsertRecipeIngredients($objects: [recipe_ingredients_insert_input!]!) {
+    insert_recipe_ingredients(objects: $objects) {
+      affected_rows
+    }
+  }
+`
+
+const UPLOAD_RECIPE_IMAGE = gql`
+  mutation UploadRecipeImage($input: UploadRecipeImageInput!) {
+    uploadRecipeImage(input: $input) {
       success
       message
       image_url
@@ -432,32 +463,12 @@ const UPLOAD_IMAGE = gql`
   }
 `
 
-const UPDATE_RECIPE = gql`
-  mutation UpdateRecipe($id: uuid!, $featured_image_url: String) {
-    update_recipes_by_pk(
-      pk_columns: {id: $id}
-      _set: {featured_image_url: $featured_image_url}
-    ) {
-      id
-      featured_image_url
-    }
-  }
-`
-
 // Mutations
-
-const token = ref(null)
-const { mutate: createRecipe } = useMutation(CREATE_RECIPE_MUTATION,() => ({
-  context: {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  }
-}))
-const { mutate: uploadImage } = useMutation(UPLOAD_IMAGE)
-const { mutate: updateRecipe } = useMutation(UPDATE_RECIPE)
-
-const loading = ref(false)
+const { mutate: insertRecipe } = useMutation(INSERT_RECIPE)
+const { mutate: insertRecipeCategory } = useMutation(INSERT_RECIPE_CATEGORY)
+const { mutate: insertRecipeSteps } = useMutation(INSERT_RECIPE_STEPS)
+const { mutate: insertRecipeIngredients } = useMutation(INSERT_RECIPE_INGREDIENTS)
+const { mutate: uploadRecipeImage } = useMutation(UPLOAD_RECIPE_IMAGE)
 
 // Categories
 const categories = ref([])
@@ -480,18 +491,11 @@ const userId = ref(null)
 
 onMounted(() => {
   const userStr = localStorage.getItem("user")
-  const tokenstr = localStorage.getItem('token')
-
   if (userStr) {
     const user = JSON.parse(userStr)
     userId.value = user.id
   }
-
-  if (tokenstr) {
-    token.value = tokenstr
-  }
 })
-
 
 const handleImageUpload = (event, index) => {
   const file = event.target.files[0]
@@ -538,11 +542,6 @@ const removeStep = (index) => {
   })
 }
 
-const reorderSteps = () => {
-  // Sort steps by step_number
-  steps.value.sort((a, b) => a.step_number - b.step_number)
-}
-
 const addIngredient = () => {
   ingredients.value.push({ name: '', quantity: null, unit: '' })
 }
@@ -559,9 +558,7 @@ const removeImage = (index) => {
   const wasFeatured = images.value[index].is_featured
   images.value.splice(index, 1)
   
-  // If we removed the featured image and there are images left
   if (wasFeatured && images.value.length > 0) {
-    // Set the first remaining image as featured
     images.value[0].is_featured = true
   }
 }
@@ -596,61 +593,80 @@ const submit = async (values) => {
     }
 
     // Validate images
-    if (images.value.length === 0) {
+    const hasImages = images.value.some(img => img.previewUrl)
+    if (!hasImages) {
       throw new Error('Please add at least one image')
     }
-    
-    const hasValidImages = images.value.some(img => img.file)
-    if (!hasValidImages) {
-      throw new Error('Please select an image file for at least one image')
-    }
 
-    // Check if at least one image is marked as featured
-    const hasFeaturedImage = images.value.some(img => img.is_featured && img.file)
+    // Check featured image
+    const hasFeaturedImage = images.value.some(img => img.is_featured)
     if (!hasFeaturedImage) {
       throw new Error('Please mark one image as featured')
     }
 
-    // Prepare recipe payload
-    const recipePayload = {
+    // 1. Create the base recipe
+    const { data: recipeData, errors: recipeErrors } = await insertRecipe({
       title: values.title,
       description: values.description || null,
-      user_id: userId.value,
       prep_time: values.prep_time || null,
       cook_time: values.cook_time || null,
-      servings: values.servings || null,
-      category_ids: [values.category_id],
-      featured_image_url: null, // Will be set after upload
-      price:values.price || null,
-      steps: steps.value.map(step => ({
-        step_number: step.step_number,
-        instruction: step.instruction,
-        image_url: step.image_url || null
-      })),
-      ingredients: ingredients.value.map(ing => ({
-        name: ing.name,
-        quantity: ing.quantity || null,
-        unit: ing.unit || null
-      }))
-    }
-
-    // 1. Create the recipe
-    const { data: createData, errors: createErrors } = await createRecipe({ 
-      object: recipePayload 
+      servings: values.servings,
+      price: values.price,
+      user_id: userId.value
     })
     
-    if (createErrors) {
-      throw new Error('Failed to create recipe: ' + createErrors[0].message)
+    if (recipeErrors) {
+      throw new Error('Failed to create recipe: ' + recipeErrors[0].message)
     }
 
-    const createdRecipe = createData?.createRecipe
-    if (!createdRecipe?.id) {
+    const recipeId = recipeData?.insert_recipes_one?.id
+    if (!recipeId) {
       throw new Error('Failed to create recipe - no ID returned')
     }
 
-    // 2. Upload all images
-    let featuredImageUrl = null
+    // 2. Add category relationship
+    const { errors: categoryErrors } = await insertRecipeCategory({
+      recipe_id: recipeId,
+      category_id: values.category_id
+    })
     
+    if (categoryErrors) {
+      throw new Error('Failed to add category: ' + categoryErrors[0].message)
+    }
+
+    // 3. Add steps
+    const stepsInput = steps.value.map(step => ({
+      recipe_id: recipeId,
+      step_number: step.step_number,
+      instruction: step.instruction,
+      image_url: step.image_url || null
+    }))
+    
+    const { errors: stepsErrors } = await insertRecipeSteps({
+      objects: stepsInput
+    })
+    
+    if (stepsErrors) {
+      throw new Error('Failed to add steps: ' + stepsErrors[0].message)
+    }
+
+    // 4. Add ingredients
+    const ingredientsInput = ingredients.value.map(ing => ({
+      recipe_id: recipeId,
+      name: ing.name,
+      quantity: ing.quantity || null,
+      unit: ing.unit || null
+    }))
+    
+    const { errors: ingredientsErrors } = await insertRecipeIngredients({
+      objects: ingredientsInput
+    })
+    
+    if (ingredientsErrors) {
+      throw new Error('Failed to add ingredients: ' + ingredientsErrors[0].message)
+    }
+
+    // 5. Upload images (backend handles featured image)
     for (const [index, img] of images.value.entries()) {
       if (!img.file) continue
       
@@ -658,49 +674,33 @@ const submit = async (values) => {
         const base64str = await toBase64(img.file)
         const filename = `${Date.now()}_${img.file.name.replace(/\s+/g, '_')}`
 
-        const { data: uploadData, errors: uploadErrors } = await uploadImage({
-          recipe_id: createdRecipe.id,
-          is_featured: img.is_featured,
-          base64str,
-          filename
+        await uploadRecipeImage({
+          input: {
+            recipe_id: recipeId,
+            is_featured: img.is_featured,
+            base64str,
+            filename
+          }
         })
 
-        if (uploadErrors) {
-          console.error(`Error uploading image ${index + 1}:`, uploadErrors[0].message)
-          continue
-        }
-
-        if (uploadData?.uploadRecipeImage?.image_url) {
-          if (img.is_featured) {
-            featuredImageUrl = uploadData.uploadRecipeImage.image_url
-          }
+        // Update step image URL if this image is for a step
+        if (steps.value[index]?.image_url === '') {
+          steps.value[index].image_url = filename // Or use the returned URL if your backend provides it
         }
       } catch (err) {
         console.error(`Error uploading image ${index + 1}:`, err)
       }
     }
 
-    // 3. Update recipe with the featured image URL if we have one
-    if (featuredImageUrl) {
-      try {
-        await updateRecipe({
-          id: createdRecipe.id,
-          featured_image_url: featuredImageUrl
-        })
-      } catch (err) {
-        console.error('Error updating recipe with featured image:', err)
-      }
-    }
-
     // Success!
     router.push({
-      path: `/recipes/${createdRecipe.id}`,
+      path: `/recipes/${recipeId}`,
       query: { created: 'true' }
     })
 
   } catch (err) {
-    alert(err.message || 'An error occurred while submitting the recipe.')
-    console.error('Recipe submission error:', err)
+    alert(err.message || 'An error occurred while creating the recipe.')
+    console.error('Recipe creation error:', err)
   } finally {
     loading.value = false
   }

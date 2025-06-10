@@ -49,9 +49,7 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
     }
 
 func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
-//     var req struct {
-//         Input RegisterInput `json:"input"`
-//     }
+
   var req struct {
         Input RegisterInput `json:"input"`
     }

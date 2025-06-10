@@ -2,7 +2,7 @@
   <div class="recipe-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
     <div class="relative">
       <NuxtImg 
-        :src="recipe.featured_image_url || '/placeholder-food.jpg'" 
+        :src="recipe.feature_image_url || '/placeholder-food.jpg'" 
         :alt="recipe.title"
         class="w-full h-48 object-cover"
         width="400"
