@@ -1,23 +1,138 @@
 <script setup>
+import { gsap } from "gsap";
+import { onMounted, ref, computed } from "vue";
+import {
+  RecpiesAllRecipes,
+  FilterBreakfast,
+  FilterDesserts,
+  FilterDinner,
+  FilterFasting,
+  FilterLunch,
+  FilterNonFasting,
+} from "#components";
+import { useRecipeStore, authStore } from "#imports";
 
-const recipeStore = useRecipeStore()
+const recipesStore = useRecipeStore();
 const auth = authStore();
 
-const isAuthenticated = computed(() => auth.isAuthed)
-const userId = computed(() => auth.userId)
+// Refs for DOM elements
+const heroSection = ref(null);
+const title = ref(null);
+const subtitle = ref(null);
+const cta = ref(null);
+const feature1 = ref(null);
+const feature2 = ref(null);
+const feature3 = ref(null);
 
+// Tab and search functionality
+const selectedTab = ref("all");
+const searchQuery = ref("");
+const isAuthenticated = computed(() => auth.isAuthed);
+const userId = computed(() => auth.userId);
 
 // Formatting helper function
 const formatNumber = (num) => {
   if (!num) return '0'
   return new Intl.NumberFormat().format(num)
 }
+
+// Component selection based on tab
+const selectedComponent = computed(() => {
+  switch (selectedTab.value) {
+    case "all":
+      return RecpiesAllRecipes;
+    case "breakfast":
+      return FilterBreakfast;
+    case "lunch":
+      return FilterLunch;
+    case "desserts":
+      return FilterDesserts;
+    case "fasting":
+      return FilterFasting;
+    case "non-fasting":
+      return FilterNonFasting;
+    case "dinner":
+      return FilterDinner;
+    default:
+      return RecpiesAllRecipes;
+  }
+});
+
+const handleSearch = async () => {
+  recipesStore.setSearchRecipe(searchQuery.value);
+  await recipesStore.getAllRecipes(searchQuery.value);
+};
+
+const fetchCategories = async () => {
+  await recipesStore.getCategories();
+};
+
+// Mounted lifecycle hook
+onMounted(() => {
+  // Hero Section Animations
+  gsap.from(heroSection.value, {
+    duration: 1,
+    scale: 1.2,
+    opacity: 0,
+    ease: "power2.out",
+  });
+
+  gsap.from(title.value, {
+    duration: 1,
+    y: -50,
+    opacity: 0,
+    ease: "power2.out",
+  });
+
+  gsap.from(subtitle.value, {
+    duration: 1,
+    y: 50,
+    opacity: 0,
+    ease: "power2.out",
+    delay: 0.5,
+  });
+
+  gsap.from(cta.value, {
+    duration: 1,
+    y: 50,
+    opacity: 0,
+    ease: "power2.out",
+    delay: 1,
+  });
+
+  // Features Section Animations
+  gsap.from(feature1.value, {
+    duration: 1,
+    x: -100,
+    opacity: 0,
+    ease: "power2.out",
+    delay: 1.5,
+  });
+
+  gsap.from(feature2.value, {
+    duration: 1,
+    y: 100,
+    opacity: 0,
+    ease: "power2.out",
+    delay: 2,
+  });
+
+  gsap.from(feature3.value, {
+    duration: 1,
+    x: 100,
+    opacity: 0,
+    ease: "power2.out",
+    delay: 2.5,
+  });
+  
+  fetchCategories();
+});
 </script>
 
 <template>
-  <div class="bg-white shadow-sm">   
+  <div class="bg-white shadow-sm">
     <!-- Hero Section -->
-    <section class="relative bg-gray-900 text-white overflow-hidden">
+    <section ref="heroSection" class="relative bg-gray-900 text-white overflow-hidden">
       <!-- Background Image with Overlay -->
       <div class="absolute inset-0 z-0">
         <img 
@@ -29,16 +144,16 @@ const formatNumber = (num) => {
 
       <div class="relative z-10 max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8">
         <div class="text-center">
-          <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
+          <h1 ref="title" class="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
             <span class="block">Discover & Share</span>
             <span class="block text-green-400">Delicious Recipes</span>
           </h1>
 
-          <p class="mt-6 max-w-lg mx-auto text-xl text-gray-300">
+          <p ref="subtitle" class="mt-6 max-w-lg mx-auto text-xl text-gray-300">
             Join our community of food lovers. Find inspiration or contribute your own culinary creations.
           </p>
 
-          <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+          <div ref="cta" class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
             <NuxtLink 
               to="/recipes" 
               class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 md:py-4 md:text-lg md:px-10 transition-colors"
@@ -65,8 +180,189 @@ const formatNumber = (num) => {
         </div>
       </div>
     </section>
-<!-- Kushan Cuisine Section -->
-    <section class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+
+    <!-- Recipe Tabs Section -->
+    <section class="py-16 dark:bg-[#20161F]">
+      <div class="container mx-auto">
+        <!-- Tabs -->
+        <div class="tabs-container items-center justify-center mx-auto">
+          <div
+            class="tabs-box flex flex-wrap md:flex-row space-x-6 p-1 bg-gray-400 dark:bg-[#422f40] items-center justify-center w-full rounded-full font-poppins-italic"
+          >
+            <!-- All Tab -->
+            <input
+              type="radio"
+              name="my_tabs_1"
+              id="all"
+              class="hidden"
+              v-model="selectedTab"
+              value="all"
+            />
+            <label
+              for="all"
+              class="tab-label md:text-xl px-6 py-2 rounded-full dark:text-black bg-gray-400 dark:bg-[#422f40] text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              :class="{
+                'bg-white dark:bg-white dark:text-black text-gray-700 shadow-lg':
+                  selectedTab === 'all',
+                'bg-gray-400 text-gray-700 hover:bg-gray-200 hover:shadow-lg':
+                  selectedTab !== 'all',
+              }"
+            >
+              All
+            </label>
+
+            <!-- Breakfast Tab -->
+            <input
+              type="radio"
+              name="my_tabs_1"
+              id="breakfast"
+              class="hidden"
+              v-model="selectedTab"
+              value="breakfast"
+            />
+            <label
+              for="breakfast"
+              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full bg-gray-400 dark:bg-[#422f40] text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              :class="{
+                'bg-white dark:bg-white text-gray-700 shadow-lg':
+                  selectedTab === 'breakfast',
+                'bg-gray-400 text-gray-700 hover:bg-gray-200 hover:shadow-lg':
+                  selectedTab !== 'breakfast',
+              }"
+            >
+              Breakfast
+            </label>
+
+            <!-- Lunch Tab -->
+            <input
+              type="radio"
+              name="my_tabs_1"
+              id="lunch"
+              class="hidden"
+              v-model="selectedTab"
+              value="lunch"
+            />
+            <label
+              for="lunch"
+              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              :class="{
+                'bg-white dark:bg-white text-gray-700 shadow-lg':
+                  selectedTab === 'lunch',
+                'bg-gray-400 text-gray-700 hover:bg-gray-200 hover:shadow-lg':
+                  selectedTab !== 'lunch',
+              }"
+            >
+              Lunch
+            </label>
+
+            <!-- Desserts & Sweets Tab -->
+            <input
+              type="radio"
+              name="my_tabs_1"
+              id="desserts"
+              class="hidden"
+              v-model="selectedTab"
+              value="desserts"
+            />
+            <label
+              for="desserts"
+              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              :class="{
+                'bg-white dark:bg-white text-gray-700 shadow-lg':
+                  selectedTab === 'desserts',
+                'bg-gray-400 text-gray-700 hover:bg-gray-200 hover:shadow-lg':
+                  selectedTab !== 'desserts',
+              }"
+            >
+              Desserts & Sweets
+            </label>
+
+            <!-- Fasting Dishes Tab -->
+            <input
+              type="radio"
+              name="my_tabs_1"
+              id="fasting"
+              class="hidden"
+              v-model="selectedTab"
+              value="fasting"
+            />
+            <label
+              for="fasting"
+              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              :class="{
+                'bg-white dark:bg-white text-gray-700 shadow-lg':
+                  selectedTab === 'fasting',
+                'bg-gray-400  text-gray-700 hover:bg-gray-200 hover:shadow-lg':
+                  selectedTab !== 'fasting',
+              }"
+            >
+              Fasting Dishes
+            </label>
+
+            <!-- Non-Fasting Dishes Tab -->
+            <input
+              type="radio"
+              name="my_tabs_1"
+              id="non-fasting"
+              class="hidden"
+              v-model="selectedTab"
+              value="non-fasting"
+            />
+            <label
+              for="non-fasting"
+              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              :class="{
+                'bg-white dark:bg-white text-gray-700 shadow-lg':
+                  selectedTab === 'non-fasting',
+                'bg-gray-400 text-gray-700 hover:bg-gray-300 hover:shadow-lg':
+                  selectedTab !== 'non-fasting',
+              }"
+            >
+              Non-Fasting Dishes
+            </label>
+
+            <!-- Dinner Tab -->
+            <input
+              type="radio"
+              name="my_tabs_1"
+              id="dinner"
+              class="hidden"
+              v-model="selectedTab"
+              value="dinner"
+            />
+            <label
+              for="dinner"
+              class="tab-label md:text-xl px-6 py-2 rounded-full dark:text-black dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              :class="{
+                'bg-white dark:bg-white text-gray-700 shadow-lg':
+                  selectedTab === 'dinner',
+                'bg-gray-400 text-gray-700 hover:bg-gray-300 hover:shadow-lg':
+                  selectedTab !== 'dinner',
+              }"
+            >
+              Dinner
+            </label>
+          </div>
+        </div>
+        <div class="mb-6 mt-6 flex justify-center dark:bg-[#20161F]">
+          <input
+            @input="handleSearch"
+            v-model="searchQuery"
+            type="text"
+            placeholder="what are we cooking today?"
+            class="w-full sm:w-1/2 p-3 border-2 border-green-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-[#20161F]"
+          />
+        </div>
+
+        <!-- Dynamic component based on selected tab -->
+        <div class="mt-8">
+          <component :is="selectedComponent" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Kushan Cuisine Section -->
+    <section ref="feature1" class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
       <div class="text-center mb-12">
         <h2 class="text-3xl font-bold text-gray-900 mb-4">
           Explore <span class="text-green-600">Kushan Recipe</span>
@@ -78,7 +374,7 @@ const formatNumber = (num) => {
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <!-- Recipe Card 1 -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:scale-105">
+        <div ref="feature2" class="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:scale-105">
           <img 
             src="https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" 
             alt="Kushan Dumplings"
@@ -122,7 +418,7 @@ const formatNumber = (num) => {
         </div>
 
         <!-- Recipe Card 3 -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:scale-105">
+        <div ref="feature3" class="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:scale-105">
           <img 
             src="https://images.unsplash.com/photo-1565557623262-b51c2513a641?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1371&q=80" 
             alt="Kushan Bread"
@@ -156,6 +452,7 @@ const formatNumber = (num) => {
         </NuxtLink>
       </div>
     </section>
+
     <!-- CTA Section -->
     <section class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 text-center">
       <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-8 text-white">
@@ -200,3 +497,39 @@ const formatNumber = (num) => {
     </section>
   </div>
 </template>
+
+<style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+.font-poppins {
+  font-family: "Poppins", sans-serif;
+}
+.font-poppins-italic {
+  font-family: "Poppins", sans-serif;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  /* Adjust for small screens */
+  section[ref="heroSection"] {
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+  
+  .tabs-box {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .tab-label {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Hide scrollbar */
+::-webkit-scrollbar {
+  display: none;
+}
+</style>

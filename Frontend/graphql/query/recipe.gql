@@ -1,9 +1,7 @@
 query getRecipe($recipeId: Int!) {
   recipes_by_pk(id: $recipeId) {
     category_id
-    rating{
-      rating
-    }
+     average_rating
     description
     featured_image
     price

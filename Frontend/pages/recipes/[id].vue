@@ -410,8 +410,8 @@ const closeModal = () => {
                     :key="star"
                     class="text-2xl"
                     :class="{
-                      'text-yellow-500': star <= Math.round(recipeDetails.rating.rating),
-                      'text-yellow-100': star > Math.round(recipeDetails.rating.rating),
+                      'text-yellow-500': star <= Math.round(recipeDetails.average_rating),
+                      'text-yellow-100': star > Math.round(recipeDetails.average_rating),
                     }"
                   >
                     ★

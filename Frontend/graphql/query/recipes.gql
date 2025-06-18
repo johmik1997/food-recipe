@@ -22,7 +22,7 @@ query recipes($limit: Int!, $offset: Int!) {
       # quantity
       # created_at
     }
-    categories {
+   catagory {
       name
     }
     likes_aggregate {

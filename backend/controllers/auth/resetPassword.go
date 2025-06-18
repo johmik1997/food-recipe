@@ -91,7 +91,7 @@ func ResetPassword() gin.HandlerFunc {
 
 		if err := client.Mutate(context.Background(), &mutation, mutationVars); err != nil {
 			log.Printf("failed to register reset token")
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to register rewste token", "details": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to register reste token", "details": err.Error()})
 			return
 		}
 
