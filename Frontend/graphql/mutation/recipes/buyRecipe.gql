@@ -1,0 +1,11 @@
+mutation buyRecipe($buyer_id: Int!, $recipe_id: Int!) {
+  buyRecipe(buyer_id: $buyer_id, recipe_id: $recipe_id) {
+    message
+    buyer_id
+    checkout_url
+    payment_id
+    price
+    recipe_id
+    seller_id
+  }
+}

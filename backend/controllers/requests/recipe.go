@@ -1,0 +1,91 @@
+package requests
+
+import (
+	"foodrecipe/controllers/models"
+)
+
+type AddRecipeRequest struct {
+	Input struct {
+		Title           string              `json:"title" validate:"required"`
+		Description     string              `json:"description" validate:"required"`
+		PreparationTime int                 `json:"prep_time" validate:"required"`
+		CookTime        int                 `json:"cook_time" validate:"required"`
+		Servings        int                 `json:"servings" validate:"required"`
+		FeaturedImage   *models.ImageInput  `json:"featured_image,omitempty"`
+		UserId          int                 `json:"user_id" `
+		CategoryId      int                 `json:"category_id" validate:"required"`
+		Ingredients     []IngredientRequest `json:"ingredients" validate:"required,dive"`
+		Steps           []StepRequest       `json:"steps" validate:"required,dive"`
+		Price           int                 `json:"price" validate:"required"`
+	} `json:"input"`
+}
+
+type IngredientRequest struct {
+	ID       int    `json:"id,omitempty"`
+	Name     string `json:"name" validate:"required"`
+	Quantity string `json:"quantity,omitempty"`
+	UserId   int    `json:"user_id" `
+}
+
+type StepRequest struct {
+	ID          int    `json:"id,omitempty"`
+	StepNumber  int    `json:"step_number" validate:"required"`
+	Instruction string `json:"instruction" validate:"required"`
+	UserId      int    `json:"user_id" `
+}
+
+type DeleteRecipeRequest struct {
+	Input struct {
+		RecipeId int `json:"id" validate:"required"`
+		UserId   int `json:"user_id" validate:"required"`
+	} `json:"input"`
+}
+
+type UpdateRecipeRequest struct {
+	Input struct {
+		ID              int        `json:"id" validate:"required"`
+		UserId          int        `json:"user_id" validate:"required"`
+		Title           string     `json:"title" validate:"required"`
+		Description     string     `json:"description" validate:"required"`
+		PreparationTime int        `json:"prep_time" validate:"required"`
+		CookTime        int        `json:"cook_time" validate:"required"`
+		Servings        int        `json:"servings" validate:"required"`
+		FeaturedImage   *models.ImageInput `json:"featured_image"`
+		CategoryId      int        `json:"category_id" validate:"required"`
+		Price           int        `json:"price" validate:"required"`
+	} `json:"input"`
+}
+
+type ImageUpLoadRequest struct {
+	Input struct {
+		RecipeId           int                  `json:"recipe_id" validate:"required"`
+		Images             []models.ImageInput  `json:"images" validate:"required,dive"`
+		//Image             []models.ImageInput  `json:"images" validate:"required,dive"`
+		FeaturedImageIndex int                  `json:"featuredImageIndex" validate:"required,gte=0"`
+	} `json:"input"`
+}
+
+
+type BuyRecipeRequest struct {
+	Input struct {
+		ID           int    `json:"id" `
+		BuyerId      int    `json:"buyer_id" `
+		RecipeId     int    `json:"recipe_id" `
+		PurchaseDate string `json:"purchase_date" `
+		Price        int    `json:"price" `
+		SellerId     int    `json:"seller_id" `
+	} `json:"input"`
+}
+
+type PaymentProcessRequest struct {
+	Input struct {
+		TxRef string `json:"tx_ref"`
+		Id    int    `json:"id"`
+	} `json:"input"`
+}
+
+type RegenerateEmailVerificationToken struct{
+	Input struct{
+		Email string `json:"email" validate:"required,email"`
+	}
+}

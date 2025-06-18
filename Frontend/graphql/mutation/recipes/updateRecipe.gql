@@ -1,0 +1,29 @@
+mutation updateRecipe(
+  $category_id: Int
+  $description: String
+  $recipe_id: Int!
+  $user_id: Int!
+  $prep_time: Int!
+  $cook_time: Int!
+  $servings: Int!
+  $title: String!
+  $price: Int!
+  $base64String: String
+  $type: String
+  $name: String
+) {
+  updateRecipe(
+    category_id: $category_id
+    description: $description
+    id: $recipe_id
+    prep_time: $prep_time
+    cook_time: $cook_time
+    servings: $servings
+    price: $price
+    title: $title
+    user_id: $user_id
+    featured_image: { base64String: $base64String, name: $name, type: $type }
+  ) {
+    message
+  }
+}

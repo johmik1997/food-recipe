@@ -1,116 +1,222 @@
-# Custom input/output types and your 5 Action definitions
-
-#–– Create Recipe ––
-input CreateRecipeInput {
-  title: String!
-  description: String
-  prep_time: Int
-  cook_time: Int
-  servings: Int
-  featured_image_url: String
-  price: Int
-  user_id: uuid
-  category_ids: [uuid!]
-  steps: [RecipeStepInput!]!
-  ingredients: [RecipeIngredientInput!]!
-  images: [RecipeImageInput!]
-}
-
-input RecipeStepInput {
-  step_number: Int!
-  instruction: String!
-  image_url: String
-}
-
-input RecipeIngredientInput {
-  name: String!
-  quantity: numeric
-  unit: String
-}
-
-input RecipeImageInput {
-  image_url: String!
-  is_featured: Boolean
-}
-
-type RecipeOutput {
-  id: uuid!
-  title: String!
-  description: String
-  prep_time: Int
-  cook_time: Int
-  total_time: Int
-  servings: Int
-  featured_image_url: String
-  price: Int
-  created_at: timestamptz!
+type Mutation {
+  DeleteRecipe(
+    id: Int!
+    user_id: Int!
+  ): RemoveRecipeOutput!
 }
 
 type Mutation {
-  createRecipe(object: CreateRecipeInput!): RecipeOutput
+  NewTokenRequest(
+    email: String!
+  ): RegenerateEmailVerificationTokenResponse!
 }
 
-#–– Login ––
-type LoginResponse {
-  token: String!
-  user: User!
+type Mutation {
+  ProcessPayment(
+    id: Int!
+    tx_ref: String!
+  ): ProcessPaymentOutput!
+}
+
+type Mutation {
+  addRecipe(
+    title: String!
+    description: String!
+    prep_time: Int!
+    cook_time: Int!
+    servings: Int!
+    featured_image: ImageInfo
+    user_id: Int!
+    category_id: Int!
+    ingredients: [IngredientRequest!]!
+    price: Int!
+    steps: [StepRequest!]!
+  ): AddRecipeResponseOutput!
+}
+
+type Mutation {
+  buyRecipe(
+    buyer_id: Int!
+    recipe_id: Int!
+    price: Int
+  ): BuyRecipeOutput
+}
+
+type Query {
+  login(
+    email: String!
+    password: String!
+  ): LoginResponce
+}
+
+type Mutation {
+  passwordResetRequest(
+    email: String!
+  ): ResetRequestOutput!
+}
+
+type Mutation {
+  passwordUpdate(
+    token: String!
+    userId: Int!
+    password: String!
+  ): ResetedPasswordOutput!
+}
+
+type Mutation {
+  signup(
+    userName: String!
+    email: String!
+    phone: String!
+    password: String!
+    role: String
+    image: ImageInfo
+  ): SignedUpUserOutput!
+}
+
+type Mutation {
+  updateProfile(
+    userName: String!
+    phone: String!
+    userId: Int!
+  ): UpdateResponce!
+}
+
+type Mutation {
+  updateRecipe(
+    id: Int!
+    user_id: Int!
+    title: String
+    description: String
+    prep_time: Int
+    cook_time: Int
+    servings: Int
+    featured_image: ImageInfo
+    category_id: Int
+    price: Int
+  ): UpdateRecipeOutput!
+}
+
+type Mutation {
+  updateRecipeImage(
+    recipe_id: Int!
+    images: [ImageInfo!]!
+  ): [UploadResponce!]
+}
+
+type Mutation {
+  uploadRecipeImage(
+    recipe_id: Int!
+    images: [ImageInfo!]!
+    featuredImageIndex: Int!
+  ): [UploadResponce!]
+}
+
+type Mutation {
+  verifyEmail(
+    verification_token: String!
+    user_id: Int!
+  ): ResetedPasswordOutput!
+}
+
+type Mutation {
+  verifyPayment(
+    tx_ref: String!
+    id: Int!
+  ): ProcessPaymentOutput!
+}
+
+input ImageInfo {
+  name: String
+  type: String
+  base64String: String
+}
+
+input IngredientRequest {
+  id: Int
+  name: String!
+  quantity: String
+}
+
+input StepRequest {
+  id: Int
+  step_number: Int!
+  instruction: String
+}
+
+type LoginResponce {
+  user: User
 }
 
 type User {
-  id: String!
-  email: String!
+  id: Int!
   name: String!
-}
-
-extend type Mutation {
-  login(email: String!, password: String!): LoginResponse
-}
-
-#–– Register ––
-input RegisterInput {
   email: String!
-  password: String!
-  name: String!
-}
-
-type RegisterResponse {
   token: String!
-  user: User!
+  role: String!
+  refreshToken: String!
 }
 
-extend type Mutation {
-  register(input: RegisterInput!): RegisterResponse
+type RegenerateEmailVerificationTokenResponse {
+  message: String!
 }
 
-#–– Upload Profile Image ––
-input UploadProfileInput {
-  userId: uuid!
-  base64str: String!
-  filename: String!
+type ProcessPaymentOutput {
+  message: String!
+  status: String
 }
 
-type UploadImageOutput {
-  success: Boolean!
-  message: String
-  avatar_image_url: String
+type ResetRequestOutput {
+  id: Int!
+  message: String!
 }
 
-extend type Mutation {
-  uploadProfileImage(input: UploadProfileInput!): UploadImageOutput
+type ResetedPasswordOutput {
+  message: String!
 }
 
-#–– Upload Recipe Image ––
-type UploadRecipeImageOutput {
-  success: Boolean!
-  message: String
-  image_url: String
+type SignedUpUserOutput {
+  id: Int!
+  userName: String!
+  email: String!
+  token: String!
+  role: String!
+  refreshToken: String!
 }
 
-extend type Mutation {
-  uploadRecipeImage(
-    recipe_id: uuid!
-    is_featured: Boolean!
-    base64str: String!
-    filename: String!
-  ): UploadRecipeImageOutput
+type UpdateResponce {
+  message: String!
 }
+
+type AddRecipeResponse {
+  message: String!
+}
+
+type AddRecipeResponseOutput {
+  id: Int!
+  title: String!
+  message: String!
+}
+
+type RemoveRecipeOutput {
+  message: String!
+}
+
+type UpdateRecipeOutput {
+  message: String!
+}
+
+type UploadResponce {
+  url: String!
+}
+
+type BuyRecipeOutput {
+  payment_id: Int!
+  checkout_url: String!
+  message: String!
+  buyer_id: Int!
+  recipe_id: Int!
+  price: Int!
+  seller_id: Int!
+}
+

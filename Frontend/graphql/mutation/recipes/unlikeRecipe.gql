@@ -1,0 +1,8 @@
+mutation deleteLike($id: Int!) {
+  delete_like(where: { id: { _eq: $id } }) {
+    affected_rows
+    returning {
+      recipe_id
+    }
+  }
+}

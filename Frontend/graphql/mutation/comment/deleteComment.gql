@@ -1,0 +1,5 @@
+mutation delete_comments($id: Int!) {
+  delete_comments(where: { id: { _eq: $id } }) {
+    affected_rows
+  }
+}

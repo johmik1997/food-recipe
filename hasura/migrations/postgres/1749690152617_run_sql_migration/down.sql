@@ -1,0 +1,4 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- ALTER TABLE public.users DROP COLUMN github_id;
+-- ALTER TABLE public.users DROP COLUMN google_id;

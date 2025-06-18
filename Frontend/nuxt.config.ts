@@ -1,41 +1,82 @@
-import { defineNuxtConfig } from 'nuxt/config'
-import tailwindcss from "@tailwindcss/vite";
+import { defineNuxtConfig } from "nuxt/config";
 
 export default defineNuxtConfig({
-  modules: ['@nuxtjs/apollo', '@nuxt/image', '@vee-validate/nuxt','nuxt-icon'],
-  plugins: [
-    './plugins/apollo','./plugins/vee-validate'
-  ],
-  build: {
-    transpile: ['@apollo/client', '@vue/apollo-composable', '@vee-validate/rules', '@vee-validate','ts-invariant/process'],
-  },
-  runtimeConfig: {
-    public: {
-      apollo: {
-        clients: {
-          default: {
-            httpEndpoint: 'http://localhost:8080/v1/graphql' // your Go backend
-          }
-        }
+  compatibilityDate: "2024-11-01",
+  devtools: { enabled: true },
+  css: ["~/assets/css/main.css"],
+  modules: [
+    "@nuxtjs/apollo",
+    "@pinia/nuxt",
+    "@nuxtjs/color-mode",
+    "@nuxtjs/tailwindcss",
+
+    [
+      "@vee-validate/nuxt",
+      {
+        autoImports: true,
       },
-      veeValidate: {
+    ],
+    [
+      "@vee-validate/nuxt",
+      {
         autoImports: true,
         componentNames: {
-          Form: 'VeeForm',
-          Field: 'VeeField',
-          FieldArray: 'VeeFieldArray',
-          ErrorMessage: 'VeeErrorMessage',
+          Form: "VeeForm",
+          Field: "VeeField",
+          FieldArray: "VeeFieldArray",
+          ErrorMessage: "VeeErrorMessage",
         },
       },
-    }
+    ],
+    "@pinia/nuxt",
+  ],
+  colorMode: {
+    classSuffix: "",
+  },
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
+  },
+  pinia: {
+    storesDirs: ["./stores/**", "./custom-folder/stores/**"],
+  },
+  
+  apollo: {
+    autoImports: true,
+    clients: {
+      default: {
+        httpEndpoint: "http://localhost:8084/v1/graphql",
+        tokenStorage: "localStorage",
+        authHeader: "Authorization",
+        authType: "Bearer",
+        tokenName: "authToken",
+        httpLinkOptions: {
+          // headers: {
+          //   "x-hasura-admin-secret": "myadminsecretkey",
+          // },
+          // headers: {
+          //   Authorization: localStorage.getItem("authToken")
+          //     ? `Bearer ${localStorage.getItem("authToken")}`
+          //     : "",
+          //   "x-hasura-role": localStorage.getItem("authRole") || "anonymous",
+          // },
+        },
+
+        defaultOptions: {
+          query: {
+            fetchPolicy: "network-only",
+          },
+          watchQuery: {
+            fetchPolicy: "network-only",
+          },
+        },
+      },
+    },
   },
 
-  css: ['~/assets/css/main.css'],
-  devtools: { enabled: true },
-
-  vite: {
-    plugins: [tailwindcss()]
+  build: {
+    transpile: [/@nuxtjs[\\/]composition-api/],
   },
-
-  compatibilityDate: '2025-04-22'
-})
+});

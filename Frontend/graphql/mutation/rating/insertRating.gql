@@ -1,0 +1,8 @@
+mutation insertRating($rating: Int!, $recipe_id: Int!) {
+  insert_ratings(objects: { rating: $rating, recipe_id: $recipe_id }) {
+    affected_rows
+    returning {
+      recipe_id
+    }
+  }
+}

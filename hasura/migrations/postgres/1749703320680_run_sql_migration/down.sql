@@ -1,0 +1,3 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- ALTER TABLE "public"."email_verification_tokens" ALTER COLUMN "expires_at" TYPE timestamptz;

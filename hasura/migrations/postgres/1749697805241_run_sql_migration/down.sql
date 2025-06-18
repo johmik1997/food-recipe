@@ -1,0 +1,7 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- alter table "public"."recipes"
+--   add constraint "recipes_catagory_id_fkey"
+--   foreign key ("category_id")
+--   references "public"."catagories"
+--   ("id") on update no action on delete no action;

@@ -1,0 +1,17 @@
+query Users($limit: Int!, $offset: Int!) {
+  users(limit: $limit, offset: $offset, order_by: { created_at: asc }) {
+    email
+    created_at
+    is_email_verified
+    phone
+    id
+    profile
+    role
+    username
+  }
+  users_aggregate {
+    aggregate {
+      count
+    }
+  }
+}

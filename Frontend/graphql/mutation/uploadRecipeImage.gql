@@ -1,0 +1,13 @@
+mutation uploadImage(
+  $recipe_id: Int!
+  $images: [ImageInfo!]!
+  $featuredImageIndex: Int!
+) {
+  uploadRecipeImage(
+    recipe_id: $recipe_id
+    images: $images
+    featuredImageIndex: $featuredImageIndex
+  ) {
+    url
+  }
+}

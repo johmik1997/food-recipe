@@ -1,0 +1,7 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- alter table "public"."like" drop constraint "like_recipe_id_fkey",
+--   add constraint "like_recipe_id_fkey"
+--   foreign key ("recipe_id")
+--   references "public"."recipes"
+--   ("id") on update cascade on delete cascade;

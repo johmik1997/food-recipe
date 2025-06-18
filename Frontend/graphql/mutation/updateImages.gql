@@ -1,0 +1,5 @@
+mutation uploadImage($recipe_id: Int!, $images: [ImageInput!]!) {
+  updateRecipeImage(recipe_id: $recipe_id, images: $images) {
+    url
+  }
+}

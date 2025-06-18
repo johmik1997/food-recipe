@@ -1,0 +1,56 @@
+query allRecipes($limit: Int!, $offset: Int!, $searchQuery: String) {
+  recipes(
+    order_by: { created_at: asc }
+    limit: $limit
+    offset: $offset
+    where: {
+      _or: [
+        { title: { _ilike: $searchQuery } }
+        { catagory: { name: { _ilike: $searchQuery } } }
+        { user: { username: { _ilike: $searchQuery } } }
+        { ingredients: { name: { _ilike: $searchQuery } } }
+      ]
+    }
+  ) {
+    category_id
+    average_rating
+    created_at
+    description
+    featured_image
+    id
+    prep_time
+    cook_time
+    servings
+    price
+    title
+    user {
+      username
+    }
+    likes {
+      id
+    }
+    ingredients {
+      name
+      # quantity
+      # created_at
+    }
+    catagory {
+      name
+    }
+    likes_aggregate {
+      aggregate {
+        count
+      }
+    }
+    ratings_aggregate {
+      aggregate {
+        count
+      }
+    }
+  }
+  recipes_aggregate {
+    aggregate {
+      count
+    }
+  }
+}

@@ -1,0 +1,6 @@
+mutation VerifyPayment($id: Int!, $tx_ref: String!) {
+  ProcessPayment(id: $id, tx_ref: $tx_ref) {
+    message
+    status
+  }
+}

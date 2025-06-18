@@ -1,0 +1,59 @@
+query Profile($id: Int!) {
+  users_by_pk(id: $id) {
+    created_at
+    email
+    id
+    is_email_verified
+    phone
+    profile
+    role
+    updated_at
+    username
+    likes {
+      id
+      recipe_id
+      recipe {
+        id
+        price
+        title
+        average_rating
+        featured_image
+        description
+        user {
+          username
+        }
+      }
+    }
+    bookmarks {
+      id
+      recipe_id
+      recipe {
+        average_rating
+        description
+        featured_image
+        price
+        title
+        user {
+          username
+        }
+      }
+    }
+    sold_recipes {
+      recipe_id
+      recipe {
+        id
+        featured_image
+        title
+        description
+      }
+    }
+    recipes {
+      id
+      average_rating
+      description
+      featured_image
+      price
+      title
+    }
+  }
+}

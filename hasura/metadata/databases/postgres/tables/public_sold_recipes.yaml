@@ -1,0 +1,87 @@
+table:
+  name: sold_recipes
+  schema: public
+object_relationships:
+  - name: recipe
+    using:
+      foreign_key_constraint_on: recipe_id
+  - name: user
+    using:
+      foreign_key_constraint_on: buyer_id
+  - name: userBySellerId
+    using:
+      foreign_key_constraint_on: seller_id
+array_relationships:
+  - name: payments
+    using:
+      foreign_key_constraint_on:
+        column: sold_recipe_id
+        table:
+          name: payments
+          schema: public
+insert_permissions:
+  - role: systemAdmin
+    permission:
+      check: {}
+      columns:
+        - buyer_id
+        - id
+        - price
+        - recipe_id
+        - seller_id
+        - purchase_date
+    comment: ""
+  - role: user
+    permission:
+      check: {}
+      columns:
+        - buyer_id
+        - id
+        - price
+        - recipe_id
+        - seller_id
+        - purchase_date
+    comment: ""
+select_permissions:
+  - role: systemAdmin
+    permission:
+      columns:
+        - buyer_id
+        - id
+        - price
+        - recipe_id
+        - seller_id
+        - purchase_date
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - buyer_id
+        - id
+        - price
+        - recipe_id
+        - seller_id
+        - purchase_date
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: systemAdmin
+    permission:
+      columns:
+        - buyer_id
+        - id
+        - price
+        - recipe_id
+        - seller_id
+        - purchase_date
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: systemAdmin
+    permission:
+      filter: {}
+    comment: ""

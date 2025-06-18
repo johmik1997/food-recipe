@@ -1,0 +1,3 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- CREATE TABLE "public"."payments" ("id" serial NOT NULL, "buyer_id" integer NOT NULL, "recipe_id" integer NOT NULL, "tx_ref" text NOT NULL, "amount" integer NOT NULL, "created_at" timestamptz NOT NULL DEFAULT now(), PRIMARY KEY ("id") , FOREIGN KEY ("recipe_id") REFERENCES "public"."recipes"("id") ON UPDATE no action ON DELETE no action);

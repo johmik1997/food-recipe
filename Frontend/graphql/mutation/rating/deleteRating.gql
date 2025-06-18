@@ -1,0 +1,8 @@
+mutation deleteRating($id: Int!) {
+  delete_ratings(where: { id: { _eq: $id } }) {
+    affected_rows
+    returning {
+      recipe_id
+    }
+  }
+}

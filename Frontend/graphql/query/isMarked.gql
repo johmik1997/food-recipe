@@ -1,0 +1,5 @@
+query  IsRecipeBookmarked($recipe_id: Int!, $user_id: Int!) {
+  bookmarks(where: {recipe_id: {_eq: $recipe_id}, user_id: {_eq: $user_id}}) {
+    id
+  }
+}

@@ -1,0 +1,8 @@
+mutation Bookmark($recipe_id: Int!) {
+  insert_bookmarks_one(object: { recipe_id: $recipe_id}) {
+    created_at
+    id
+    recipe_id
+    updated_at
+  }
+}

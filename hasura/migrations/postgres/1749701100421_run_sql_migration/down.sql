@@ -1,0 +1,3 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- CREATE TABLE "public"."sold_recipes" ("id" serial NOT NULL, "recipe_id" integer NOT NULL, "buyer_id" integer NOT NULL, "purchase_date" time NOT NULL DEFAULT now(), PRIMARY KEY ("id") , FOREIGN KEY ("buyer_id") REFERENCES "public"."users"("id") ON UPDATE no action ON DELETE no action, FOREIGN KEY ("recipe_id") REFERENCES "public"."recipes"("id") ON UPDATE no action ON DELETE cascade);

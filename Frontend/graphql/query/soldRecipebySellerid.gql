@@ -1,0 +1,27 @@
+query sellerRecipes($seller_id: Int!) {
+  sold_recipes_aggregate(
+    where: { seller_id: { _eq: $seller_id } }
+    distinct_on: recipe_id
+  ) {
+    nodes {
+      recipe {
+        id
+        title
+        average_rating
+        category_id
+        created_at
+        description
+        featured_image
+        prep_time
+        cook_time
+        servings
+        price
+        sold_recipes_aggregate(where: { seller_id: { _eq: $seller_id } }) {
+          aggregate {
+            count(columns: buyer_id, distinct: true)
+          }
+        }
+      }
+    }
+  }
+}

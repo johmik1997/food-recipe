@@ -1,0 +1,39 @@
+query filterByCategory($name: String, $limit: Int!, $offset: Int!) {
+  recipes(
+    where: { catagory: { name: { _ilike: $name } } }
+    order_by: { created_at: asc }
+    limit: $limit
+    offset: $offset
+  ) {
+    created_at
+    category_id
+    description
+    featured_image
+    id
+    prep_time
+    cook_time
+    servings
+    price
+    average_rating
+    rating {
+      rating
+      recipe_id
+    }
+    ratings_aggregate {
+      aggregate {
+        count
+      }
+    }
+    categories {
+      name
+    }
+    title
+    updated_at
+    user_id
+    likes_aggregate {
+      aggregate {
+        count
+      }
+    }
+  }
+}

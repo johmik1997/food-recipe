@@ -1,0 +1,24 @@
+mutation SignupUser(
+  $email: String!
+  $password: String!
+  $phone: String!
+  $userName: String!
+  $base64String: String
+  $type: String
+  $name: String
+) {
+  signup(
+    email: $email
+    password: $password
+    phone: $phone
+    userName: $userName
+    image: { name: $name, type: $type, base64String: $base64String }
+  ) {
+    email
+    id
+    refreshToken
+    role
+    token
+    userName
+  }
+}

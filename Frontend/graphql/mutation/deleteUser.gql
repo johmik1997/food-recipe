@@ -1,0 +1,5 @@
+mutation DeleteUser($userId: Int!) {
+  delete_users(where: { id: { _eq: $userId } }) {
+    affected_rows
+  }
+}

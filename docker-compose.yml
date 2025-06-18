@@ -1,84 +1,143 @@
+# services:
+#   postgres:
+#     image: postgres:15
+#     container_name: postgres
+#     restart: unless-stopped
+#     volumes:
+#       - db_data:/var/lib/postgresql/data
+#     environment:
+#       POSTGRES_PASSWORD: postgrespassword
+#     networks:
+#       - app-network
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U postgres"]
+#       interval: 5s
+#       timeout: 10s
+#       retries: 5
+
+#   backend:
+#     build:
+#       context: ./backend
+#       dockerfile: Dockerfile
+#     container_name: backend
+#     ports:
+#       - "3001:3001"
+#     restart: unless-stopped
+#     environment:
+#       JWT_SECRET: "9a4049355a147359591e126f535fe1146eb3de0bb00c21532b79032efdc39b6c84d260618b723126afc587d8d5087ba0a9b91817b48fb72f45effbbd86a2f2186dbd6948c06be8b579e440a8ed8f19e59b48c4f785f49d2f6ff86f165d052fea0ea2c416cba31da1dec6c1ca547ec2606378bbb666dc5d82e921d458af823acfdb36c3fecbb7ba14add576ad88eefba0b31f3606f8fc92fd52cf144a3f4891b5951822e49a0f966799fadab1bed093f0067d3c33f2660b42fcb41cb6b3e5e2da71ef613e8f117454def63f20e2e8e975677fa10bc75cd76626696ff6614ea1d8c7c866592e4118d439b3180bc1f0546aec310efd5e8ed2d18d994502d9d5c7ed"
+#       DB_CONNECTION: "postgres://postgres:postgrespassword@postgres:5432/postgres?sslmode=disable"
+#       HASURA_GRAPHQL_ENDPOINT: "http://graphql-engine:8080/v1/graphql"
+#       HASURA_GRAPHQL_ADMIN_SECRET: "myadminsecretkey"
+#       CLOUDINARY_CLOUD_NAME: "dc9or5rjo"
+#       CLOUDINARY_API_KEY: "433214776171187"
+#       CLOUDINARY_API_SECRET: "ThV_N-ztM-fPMvNYw_OxtLdOIag"
+#     networks:
+#       - app-network
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#       graphql-engine:
+#         condition: service_started
+
+#   graphql-engine:
+#     image: hasura/graphql-engine:v2.46.0
+#     container_name: graphql-engine
+#     ports:
+#       - "8081:8080"
+#     restart: unless-stopped
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     environment:
+#       HASURA_GRAPHQL_METADATA_DATABASE_URL: "postgres://postgres:postgrespassword@postgres:5432/postgres"
+#       HASURA_GRAPHQL_DATABASE_URL: "postgres://postgres:postgrespassword@postgres:5432/postgres"
+#       HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+#       HASURA_GRAPHQL_DEV_MODE: "true"
+#       HASURA_GRAPHQL_ADMIN_SECRET: "myadminsecretkey"
+#       HASURA_GRAPHQL_JWT_SECRET: '{"type":"HS256","key":"9a4049355a147359591e126f535fe1146eb3de0bb00c21532b79032efdc39b6c84d260618b723126afc587d8d5087ba0a9b91817b48fb72f45effbbd86a2f2186dbd6948c06be8b579e440a8ed8f19e59b48c4f785f49d2f6ff86f165d052fea0ea2c416cba31da1dec6c1ca547ec2606378bbb666dc5d82e921d458af823acfdb36c3fecbb7ba14add576ad88eefba0b31f3606f8fc92fd52cf144a3f4891b5951822e49a0f966799fadab1bed093f0067d3c33f2660b42fcb41cb6b3e5e2da71ef613e8f117454def63f20e2e8e975677fa10bc75cd76626696ff6614ea1d8c7c866592e4118d439b3180bc1f0546aec310efd5e8ed2d18d994502d9d5c7ed","claims_namespace": "https://hasura.io/jwt/claims","claims_format": "json"}'
+#     networks:
+#       - app-network
+
+#   # frontend:
+#   #   build:
+#   #     context: ./Frontend
+#   #     dockerfile: Dockerfile
+#   #   container_name: nuxt-frontend
+#   #   ports:
+#   #     - "3000:3000"
+#   #   environment:
+#   #     NODE_ENV: production
+#   #     NUXT_PUBLIC_API_BASE_URL: "http://backend:3001"
+#   #     NUXT_PUBLIC_HASURA_URL: "http://graphql-engine:8080/v1/graphql"
+#   #     NUXT_PUBLIC_HASURA_WS_URL: "ws://graphql-engine:8080/v1/graphql"
+#   #   networks:
+#   #     - app-network
+#   #   depends_on:
+#   #     - backend
+#   #     - graphql-engine
+
+# networks:
+#   app-network:
+#     driver: bridge
+
+# volumes:
+#   db_data:
+
+version: "3.8"
+
 services:
   postgres:
     image: postgres:15
-    container_name: postgres
-    restart: unless-stopped
+    container_name: psql-container-recipe
+    restart: always
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - server_db_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_PASSWORD: postgrespassword
-    networks:
-      - app-network
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - .env 
+
+  graphql-engine:
+    image: hasura/graphql-engine:v2.42.0
+    ports:
+      - "8084:8080"
+    restart: always
+    environment:
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: ${HASURA_GRAPHQL_DATABASE_URL_RECIPE}
+      PG_DATABASE_URL: ${HASURA_GRAPHQL_DATABASE_URL_RECIPE}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_ACTION_BASE_URL: ${HASURA_ACTION_BASE_URL}
+      HASURA_GRAPHQL_CORS_DOMAIN: "*"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
+      HASURA_GRAPHQL_SERVER_PORT: ${HASURA_GRAPHQL_PORT}
+      HASURA_GRAPHQL_JWT_SECRET: '{"type":"HS256","key":"9a49d0bc4563b42c7dbc57a56c25535acaaf62933f9da5e35122024717843317"}'
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
+      HASURA_GRAPHQL_METADATA_DEFAULTS: '{"backend_configs":{"dataconnector":{"athena":{"uri":"http://data-connector-agent:8081/api/v1/athena"},"mariadb":{"uri":"http://data-connector-agent:8081/api/v1/mariadb"},"mysql8":{"uri":"http://data-connector-agent:8081/api/v1/mysql"},"oracle":{"uri":"http://data-connector-agent:8081/api/v1/oracle"},"snowflake":{"uri":"http://data-connector-agent:8081/api/v1/snowflake"}}}}'
+    depends_on:
+      data-connector-agent:
+        condition: service_healthy
+    env_file:
+      - .env 
+
+  data-connector-agent:
+    image: hasura/graphql-data-connector:v2.42.0
+    container_name: hasura_recipe-container
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      QUARKUS_LOG_LEVEL: ERROR
+      QUARKUS_OPENTELEMETRY_ENABLED: "false"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/api/v1/athena/health"]
       interval: 5s
       timeout: 10s
       retries: 5
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: backend
-    ports:
-      - "3001:3001"
-    restart: unless-stopped
-    environment:
-      JWT_SECRET: "9a4049355a147359591e126f535fe1146eb3de0bb00c21532b79032efdc39b6c84d260618b723126afc587d8d5087ba0a9b91817b48fb72f45effbbd86a2f2186dbd6948c06be8b579e440a8ed8f19e59b48c4f785f49d2f6ff86f165d052fea0ea2c416cba31da1dec6c1ca547ec2606378bbb666dc5d82e921d458af823acfdb36c3fecbb7ba14add576ad88eefba0b31f3606f8fc92fd52cf144a3f4891b5951822e49a0f966799fadab1bed093f0067d3c33f2660b42fcb41cb6b3e5e2da71ef613e8f117454def63f20e2e8e975677fa10bc75cd76626696ff6614ea1d8c7c866592e4118d439b3180bc1f0546aec310efd5e8ed2d18d994502d9d5c7ed"
-      DB_CONNECTION: "postgres://postgres:postgrespassword@postgres:5432/postgres?sslmode=disable"
-      HASURA_GRAPHQL_ENDPOINT: "http://graphql-engine:8080/v1/graphql"
-      HASURA_GRAPHQL_ADMIN_SECRET: "myadminsecretkey"
-      CLOUDINARY_CLOUD_NAME: "dc9or5rjo"
-      CLOUDINARY_API_KEY: "433214776171187"
-      CLOUDINARY_API_SECRET: "ThV_N-ztM-fPMvNYw_OxtLdOIag"
-    networks:
-      - app-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      graphql-engine:
-        condition: service_started
-
-  graphql-engine:
-    image: hasura/graphql-engine:v2.46.0
-    container_name: graphql-engine
-    ports:
-      - "8080:8080"
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      HASURA_GRAPHQL_METADATA_DATABASE_URL: "postgres://postgres:postgrespassword@postgres:5432/postgres"
-      HASURA_GRAPHQL_DATABASE_URL: "postgres://postgres:postgrespassword@postgres:5432/postgres"
-      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
-      HASURA_GRAPHQL_DEV_MODE: "true"
-      HASURA_GRAPHQL_ADMIN_SECRET: "myadminsecretkey"
-      HASURA_GRAPHQL_JWT_SECRET: '{"type":"HS256","key":"9a4049355a147359591e126f535fe1146eb3de0bb00c21532b79032efdc39b6c84d260618b723126afc587d8d5087ba0a9b91817b48fb72f45effbbd86a2f2186dbd6948c06be8b579e440a8ed8f19e59b48c4f785f49d2f6ff86f165d052fea0ea2c416cba31da1dec6c1ca547ec2606378bbb666dc5d82e921d458af823acfdb36c3fecbb7ba14add576ad88eefba0b31f3606f8fc92fd52cf144a3f4891b5951822e49a0f966799fadab1bed093f0067d3c33f2660b42fcb41cb6b3e5e2da71ef613e8f117454def63f20e2e8e975677fa10bc75cd76626696ff6614ea1d8c7c866592e4118d439b3180bc1f0546aec310efd5e8ed2d18d994502d9d5c7ed","claims_namespace": "https://hasura.io/jwt/claims","claims_format": "json"}'
-    networks:
-      - app-network
-
-  # frontend:
-  #   build:
-  #     context: ./Frontend
-  #     dockerfile: Dockerfile
-  #   container_name: nuxt-frontend
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     NODE_ENV: production
-  #     NUXT_PUBLIC_API_BASE_URL: "http://backend:3001"
-  #     NUXT_PUBLIC_HASURA_URL: "http://graphql-engine:8080/v1/graphql"
-  #     NUXT_PUBLIC_HASURA_WS_URL: "ws://graphql-engine:8080/v1/graphql"
-  #   networks:
-  #     - app-network
-  #   depends_on:
-  #     - backend
-  #     - graphql-engine
-
-networks:
-  app-network:
-    driver: bridge
+      start_period: 5s
+    env_file:
+      - .env 
 
 volumes:
-  db_data:
+  server_db_data:

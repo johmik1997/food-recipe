@@ -1,0 +1,6 @@
+mutation likeRecipe($recipe_id: Int!) {
+  insert_like_one(object: { recipe_id: $recipe_id }) {
+    id
+    created_at
+  }
+}

@@ -1,425 +1,294 @@
-<template>
-  <div class="min-h-screen bg-gray-50">
-    <Navbar />
-    
-    <div class="py-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Hero Header -->
-        <div class="text-center mb-16">
-          <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            <span class="bg-gradient-to-r from-green-600 to-primary-600 bg-clip-text text-transparent">
-              Delicious Recipes
-            </span>
-          </h1>
-          <p class="max-w-2xl mx-auto text-lg text-gray-600">
-            Discover mouth-watering recipes from our community. Find inspiration for your next meal!
-          </p>
-        </div>
+<script setup>
+import { useToast } from "vue-toast-notification";
+import { onMounted, ref, computed, reactive } from "vue";
 
-        <!-- Search and Filter Bar -->
-        <div class="mb-12 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div class="flex flex-col md:flex-row gap-4 items-center">
-            <!-- Search Input -->
-            <div class="relative flex-1 w-full">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+import { useRoute } from "vue-router";
+const toast = useToast();
+const route = useRoute();
+const recipesStore = useRecipeStore();
+
+const searchQuery = ref("");
+const userStore = authStore();
+const bookmarkStore = useBookmarkStore();
+const likeStore = useLikeStore();
+const user_id = userStore.$state.userId;
+  console.log("✅ userId after mounted from the index page", user_id);
+const bookmarkStates = reactive({});
+const likeStates = reactive({});
+
+const bookMarkId = computed(() => bookmarkStore.bookmarkedId);
+const likedId = computed(() => likeStore.likeId);
+
+const handleSearch = async () => {
+  recipesStore.setSearchRecipe(searchQuery.value);
+  console.log("search item from the comp", searchQuery.value);
+  await recipesStore.getAllRecipes(searchQuery.value);
+};
+
+const handleCheckBookmark = async (recipeId) => {
+  try {
+    const payload = {
+      recipe_id: recipeId,
+      user_id,
+    };
+    await bookmarkStore.checkIfBookmarked(payload);
+    bookmarkStates[recipeId] = bookmarkStore.$state.isBookmarked;
+  } catch (error) {
+    console.error("Error checking bookmark status:", error);
+  }
+};
+
+const handlesaveBookmark = async (recipeId) => {
+  try {
+    const payload = {
+      recipe_id: recipeId,
+      user_id,
+    };
+    await bookmarkStore.createBookmark(payload);
+    toast.success("Recipe saved successfully!");
+    bookmarkStates[recipeId] = true;
+  } catch (error) {
+    console.log("error saving a recipe", error);
+    toast.error("error saving recipe!");
+  }
+};
+
+const handleRemoveBookmark = async (recipeId) => {
+  try {
+    if (!bookMarkId.value) {
+      toast.error("No bookmark ID found for deletion");
+      return;
+    }
+
+    await bookmarkStore.removeBookmark(bookMarkId.value);
+    toast.success("Bookmark removed successfully!");
+    bookmarkStates[recipeId] = false;
+  } catch (error) {
+    console.error("Error removing the bookmark:", error);
+    toast.error("Error removing the bookmark");
+  }
+};
+
+const handleCheckLIke = async (recipeId) => {
+  try {
+    const payload = {
+      recipe_id: recipeId,
+      user_id,
+    };
+    await likeStore.checkIfLiked(payload);
+    likeStates[recipeId] = likeStore.$state.isLiked;
+  } catch (error) {
+    console.error("Error checking bookmark status:", error);
+  }
+};
+
+const handleLikeRecipe = async (recipeId) => {
+  try {
+    const payload = {
+      recipe_id: recipeId,
+      user_id,
+    };
+    await likeStore.likeRecipe(payload);
+    toast.success("recipe liked successfully!");
+    likeStates[recipeId] = true;
+  } catch (error) {
+    console.log("error liking the recipe", error);
+  }
+};
+
+const handleRemoveLike = async (recipeId) => {
+  try {
+    await likeStore.removeLike(likedId.value);
+    toast.success("Recipe unliked successfully!");
+    likeStates[recipeId] = false;
+  } catch (error) {
+    console.log("error liking the recipe", error);
+  }
+};
+
+onMounted(async () => {
+  console.log("Fetching all recipes...");
+  try {
+    await recipesStore.getAllRecipes();
+    console.log(
+      "Recipes loaded successfully",
+      JSON.stringify(recipesStore.recipes, null, 2)
+    );
+
+    recipesStore.recipes.forEach((recipe) => {
+      bookmarkStates[recipe.id] = false;
+      handleCheckBookmark(recipe.id);
+      likeStates[recipe.id] = false;
+      handleCheckLIke(recipe.id);
+    });
+  } catch (error) {
+    toast.error("Failed to load recipes");
+    console.error("Failed to load recipes", error);
+  }
+});
+</script>
+
+<template>
+  <div class="font-poppins p-6 lg:container lg:mx-auto bg-white">
+    <!-- Search Input -->
+    <div class="mb-6 flex justify-center">
+      <input
+        @input="handleSearch"
+        v-model="searchQuery"
+        type="text"
+        placeholder="What are we cooking today?"
+        class="w-full sm:w-1/2 p-3 border-2 border-green-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-green-800 placeholder-green-400 bg-white"
+      />
+    </div>
+
+    <!-- Recipe Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Recipe Card -->
+      <div
+        v-for="recipe in recipesStore.recipes"
+        :key="recipe.id"
+        class="card bg-white border-2 border-green-100 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300"
+      >
+        <!-- Recipe Image with Action Buttons -->
+        <figure class="relative">
+          <img
+            :src="recipe.featured_image || '/images/recipe-placeholder.jpg'"
+            alt="Recipe Image"
+            class="w-full h-60 object-cover transition-transform duration-300 hover:scale-105"
+          />
+          
+          <!-- Like Button -->
+          <button
+            @click.stop="likeStates[recipe.id] ? handleRemoveLike(recipe.id) : handleLikeRecipe(recipe.id)"
+            class="absolute bottom-2 left-2 p-2 rounded-full bg-white/90 hover:bg-white transition-all duration-200 shadow-md"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              :class="{
+                'text-red-500 fill-red-500': likeStates[recipe.id],
+                'text-gray-400': !likeStates[recipe.id],
+              }"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+          </button>
+          
+          <!-- Bookmark Button -->
+          <button
+            @click.stop="bookmarkStates[recipe.id] ? handleRemoveBookmark(recipe.id) : handlesaveBookmark(recipe.id)"
+            class="absolute bottom-2 right-2 p-2 rounded-full bg-white/90 hover:bg-white transition-all duration-200 shadow-md"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              :class="{
+                'text-green-600 fill-green-600': bookmarkStates[recipe.id],
+                'text-gray-400': !bookmarkStates[recipe.id],
+              }"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+              />
+            </svg>
+          </button>
+        </figure>
+
+        <!-- Recipe Details -->
+        <div class="card-body p-6">
+          <!-- Recipe Title -->
+          <NuxtLink :to="{ name: 'recipes-id', params: { id: recipe.id } }">
+            <h2 class="card-title text-xl font-bold text-green-800 mb-2 hover:text-green-600 transition-colors">
+              {{ recipe.title || "Untitled Recipe" }}
+            </h2>
+          </NuxtLink>
+
+          <!-- Rating and Price -->
+          <div class="flex justify-between items-center mb-3">
+            <!-- Rating Stars -->
+            <div class="flex items-center">
+              <div class="flex mr-1">
+                <span
+                  v-for="star in 5"
+                  :key="star"
+                  class="text-lg"
+                  :class="{
+                    'text-yellow-400': star <= Math.round(recipe.average_rating),
+                    'text-gray-300': star > Math.round(recipe.average_rating),
+                  }"
+                >
+                  ★
+                </span>
               </div>
-              <input
-                type="text"
-                v-model="searchQuery"
-                placeholder="Search recipes..."
-                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
+              <span class="text-sm text-green-700 font-medium">
+                ({{ recipe.ratings_aggregate.aggregate.count }})
+              </span>
             </div>
             
-            <!-- Filters -->
-            <div class="flex gap-3 w-full md:w-auto">
-              <!-- Preparation Time Filter -->
-              <div class="relative w-full">
-                <select 
-                  v-model="prepTimeFilter"
-                  class="block w-full px-3 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value="">All Times</option>
-                  <option value="10">Quick (≤ 10 mins)</option>
-                  <option value="15">Quick (≤ 15 mins)</option>
-                  <option value="30">Fast (≤ 30 mins)</option>
-                  <option value="60">Medium (≤ 1 hour)</option>
-                  <option value="120">Long (≤ 2 hours)</option>
-                  <option value="121">Very Long (> 2 hours)</option>
-                </select>
-              </div>
-
-              <!-- Ingredients Filter -->
-              <div class="relative w-full">
-                <input
-                  v-model="ingredientFilter"
-                  type="text"
-                  placeholder="Ingredients..."
-                  class="block w-full px-3 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-
-              <!-- Clear Filters Button -->
-              <button
-                v-if="hasFilters"
-                @click="clearFilters"
-                class="px-4 py-3 text-sm text-gray-600 hover:text-gray-800 transition-colors whitespace-nowrap"
-              >
-                Clear Filters
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Action Bar -->
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <h2 class="text-2xl font-bold text-gray-800">
-            {{ filteredRecipes.length }} {{ filteredRecipes.length === 1 ? 'Recipe' : 'Recipes' }} Available
-          </h2>
-          <NuxtLink 
-            to="/dashboard/recipes/create" 
-            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-green-600 to-primary-600 hover:from-green-700 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:-translate-y-0.5"
-          >
-            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Add Recipe
-          </NuxtLink>
-        </div>
-
-        <!-- Loading State -->
-        <div v-if="pending" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div v-for="n in 6" :key="n" class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-            <div class="animate-pulse">
-              <div class="h-48 bg-gray-200"></div>
-              <div class="p-6">
-                <div class="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                <div class="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
-                <div class="flex justify-between">
-                  <div class="h-4 bg-gray-200 rounded w-1/4"></div>
-                  <div class="h-4 bg-gray-200 rounded w-1/4"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Error State -->
-        <div v-else-if="error" class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
-          <div class="max-w-md mx-auto">
-            <svg class="mx-auto h-16 w-16 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h3 class="mt-4 text-lg font-medium text-gray-900">Failed to load recipes</h3>
-            <p class="mt-2 text-sm text-gray-600">{{ error.message }}</p>
-            <button 
-              @click="refetch()"
-              class="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="filteredRecipes.length === 0" class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
-          <div class="max-w-md mx-auto">
-            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <h3 class="mt-4 text-lg font-medium text-gray-900">
-              {{ hasFilters ? 'No recipes match your filters' : 'No recipes found' }}
-            </h3>
-            <p class="mt-2 text-sm text-gray-600">
-              {{ hasFilters ? 'Try adjusting your search criteria' : 'Get started by creating your first recipe.' }}
-            </p>
-            <button
-              v-if="hasFilters"
-              @click="clearFilters"
-              class="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              Clear Filters
-            </button>
-            <NuxtLink 
-              v-else
-              to="/recipes/create" 
-              class="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Add Recipe
-            </NuxtLink>
-          </div>
-        </div>
-
-        <!-- Recipe Grid -->
-        <div v-else class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          <RecipeCard 
-            v-for="recipe in filteredRecipes" 
-            :key="recipe.id"
-            :recipe="recipe"
-            :show-actions="true"
-          />
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="filteredRecipes.length > 0" class="mt-12 flex justify-center">
-          <nav class="inline-flex rounded-md shadow-sm -space-x-px">
-            <button class="px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              Previous
-            </button>
-            <button class="px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-primary-600 hover:bg-gray-50">
-              1
-            </button>
-            <button class="px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              2
-            </button>
-            <button class="px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              3
-            </button>
-            <span class="px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-              ...
+            <!-- Price -->
+            <span class="text-xl font-bold text-green-700">
+              ${{ recipe.price }}
             </span>
-            <button class="px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              Next
-            </button>
-          </nav>
+          </div>
+
+          <!-- Category and Prep Time -->
+          <div class="flex justify-between text-sm">
+            <div class="flex items-center text-green-700">
+              <span class="mr-1">🥘</span>
+              {{ recipe.catagory?.name || "Uncategorized" }}
+            </div>
+            <div class="flex items-center text-green-700">
+              <span class="mr-1">⏱️</span>
+              {{ recipe.prep_time || "N/A" }} mins
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <Footer />
   </div>
 </template>
 
-<script>
-import { ref, computed } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-export default {
-  setup() {
-    // Search and filter states
-    const searchQuery = ref('')
-    const prepTimeFilter = ref('')
-    const ingredientFilter = ref('')
-    const currentPage = ref(1)
-    const itemsPerPage = ref(9)
-
-    // GraphQL query
-    const SEARCHABLE_RECIPES = gql`
-      query SearchableRecipes($userId: uuid) {
-  recipes {
-    id
-    title
-    description
-    prep_time
-    cook_time
-    total_time
-    servings
-    feature_image_url
-    created_at
-    user{
-    name
-    id
-    avatar_image_url
-    }
-    user_bookmarks(where: {user_id: {_eq: $userId}}) {
-      id
-    }
-    user_bookmarks_aggregate(where: {user_id: {_eq: $userId}}) {
-      aggregate {
-        count(columns: created_at)
-      }
-    }
-    user_likes(where: {user_id: {_eq: $userId}}) {
-      id
-    }
-    user_likes_aggregate {
-      aggregate {
-        count
-      }
-    }
-      ratings_aggregate {
-        aggregate {
-          avg {
-            value
-          }
-          count
-        }
-      }
-  }
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
 }
 
-    `
-    const userId=ref("")
-onMounted(() => {
-  const userStr = localStorage.getItem("user");
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr);
-      userId.value = user.id;
-      if (!userId.value) {
-        errorMessage.value = "User session error. Please log in again.";
-      }
-    } catch (error) {
-      errorMessage.value = "Failed to parse user session. Please log in again.";
-    }
-  } else {
-    errorMessage.value = "No user session found. Please log in.";
-  }
-});
-
-
-    // Apollo query
-    const { result, loading: pending, error, refetch } = useQuery(
-  SEARCHABLE_RECIPES,
-  () => ({
-    userId: userId.value
-  }),
-  () => ({
-    enabled: !!userId.value,
-    fetchPolicy: 'cache-and-network' // This ensures fresh data
-  })
-)
-     console.log(result)
-    // Raw recipes data with normalized fields
- const recipes = computed(() => {
-  if (!result.value?.recipes) return []
-  
-  return result.value.recipes.map(recipe => {
-    return {
-      ...recipe,
-      // Normalize likes data
-      likes_count: recipe.user_likes_aggregate?.aggregate?.count || 0,
-      is_liked: recipe.user_likes?.length > 0,
-      
-      // Normalize bookmarks data
-      bookmarks_count: recipe.user_bookmarks_aggregate?.aggregate?.count || 0,
-      is_bookmarked: recipe.user_bookmarks?.length > 0,
-      
-      // Keep other fields
-      user: recipe.user,
-      recipe_ingredients: recipe.recipe_ingredients || []
-    }
-  })
-})
-    // Filtered recipes
-    const filteredRecipes = computed(() => {
-      return recipes.value.filter(recipe => {
-        // Search filter
-        const matchesSearch = searchQuery.value === '' || 
-                            recipe.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-                            recipe.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-        
-        // Preparation time filter
-        const prepTime = parseInt(recipe.prep_time) || 0
-        let matchesPrepTime = true
-        if (prepTimeFilter.value) {
-          const filterTime = parseInt(prepTimeFilter.value)
-          matchesPrepTime = filterTime === 121 ? prepTime > 120 : prepTime <= filterTime
-        }
-        
-        // Ingredients filter
-        let matchesIngredients = true
-        if (ingredientFilter.value) {
-          const searchTerms = ingredientFilter.value.toLowerCase().split(',').map(term => term.trim())
-          const recipeIngredients = recipe.recipe_ingredients?.map(ri => ri?.name?.toLowerCase()) || []
-          
-          matchesIngredients = searchTerms.every(term => 
-            recipeIngredients.some(ingredient => ingredient && ingredient.includes(term)))
-        }
-        
-        return matchesSearch && matchesPrepTime && matchesIngredients
-      })
-    })
-
-    // Paginated recipes
-    const paginatedRecipes = computed(() => {
-      const start = (currentPage.value - 1) * itemsPerPage.value
-      const end = start + itemsPerPage.value
-      return filteredRecipes.value.slice(start, end)
-    })
-
-    // Total pages
-    const totalPages = computed(() => {
-      return Math.ceil(filteredRecipes.value.length / itemsPerPage.value)
-    })
-
-    // Check if any filters are active
-    const hasFilters = computed(() => {
-      return prepTimeFilter.value || ingredientFilter.value || searchQuery.value
-    })
-
-    // Clear all filters
-    function clearFilters() {
-      searchQuery.value = ''
-      prepTimeFilter.value = ''
-      ingredientFilter.value = ''
-      currentPage.value = 1
-    }
-
-    // Handle recipe updates from child components
-    // In your Recipes page component
-function handleRecipeUpdate(updatedRecipe) {
-  const index = recipes.value.findIndex(r => r.id === updatedRecipe.id)
-  if (index !== -1) {
-    // Create a new array to ensure reactivity
-    const updatedRecipes = [...recipes.value]
-    // Merge the updated properties
-    updatedRecipes[index] = { 
-      ...updatedRecipes[index], 
-      ...updatedRecipe 
-    }
-    // Update the reactive reference
-    recipes.value = updatedRecipes
-  }
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-    // Pagination methods
-    function prevPage() {
-      if (currentPage.value > 1) currentPage.value--
-    }
 
-    function nextPage() {
-      if (currentPage.value < totalPages.value) currentPage.value++
-    }
-
-    function goToPage(page) {
-      if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page
-      }
-    }
-
-    return {
-      // State
-      searchQuery,
-      prepTimeFilter,
-      ingredientFilter,
-      currentPage,
-      itemsPerPage,
-      
-      // Data
-      pending,
-      error,
-      recipes: paginatedRecipes, // Return paginated recipes for display
-      filteredRecipes,
-      
-      // Computed
-      hasFilters,
-      totalPages,
-      
-      // Methods
-      refetch,
-      clearFilters,
-      handleRecipeUpdate,
-      prevPage,
-      nextPage,
-      goToPage
-    }
-  }
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(5, 150, 105, 0.1);
 }
-</script>
+
+/* Smooth transitions for interactive elements */
+button, a {
+  transition: all 0.2s ease;
+}
+
+/* Rating stars styling */
+.text-yellow-400 {
+  color: #facc15;
+}
+
+/* Input placeholder styling */
+::placeholder {
+  color: #86efac;
+  opacity: 1;
+}
+</style>

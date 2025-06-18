@@ -1,0 +1,44 @@
+query recipes($limit: Int!, $offset: Int!) {
+  recipes(limit: $limit, offset: $offset, order_by: { created_at: asc }) {
+    category_id
+    average_rating
+    created_at
+    description
+    featured_image
+    id
+    prep_time
+    cook_time
+    servings
+    price
+    title
+    user {
+      username
+    }
+    likes {
+      id
+    }
+    ingredients {
+      name
+      # quantity
+      # created_at
+    }
+    categories {
+      name
+    }
+    likes_aggregate {
+      aggregate {
+        count
+      }
+    }
+    ratings_aggregate {
+      aggregate {
+        count
+      }
+    }
+  }
+  recipes_aggregate {
+    aggregate {
+      count
+    }
+  }
+}

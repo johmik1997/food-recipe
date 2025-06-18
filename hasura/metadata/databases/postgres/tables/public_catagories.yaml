@@ -1,0 +1,67 @@
+table:
+  name: catagories
+  schema: public
+array_relationships:
+  - name: recipes
+    using:
+      foreign_key_constraint_on:
+        column: category_id
+        table:
+          name: recipes
+          schema: public
+insert_permissions:
+  - role: systemAdmin
+    permission:
+      check: {}
+      columns:
+        - name
+        - id
+        - created_at
+        - updated_at
+    comment: ""
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - name
+        - id
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: systemAdmin
+    permission:
+      columns:
+        - name
+        - id
+        - created_at
+        - updated_at
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - name
+        - id
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: systemAdmin
+    permission:
+      columns:
+        - name
+        - id
+        - created_at
+        - updated_at
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: systemAdmin
+    permission:
+      filter: {}
+    comment: ""

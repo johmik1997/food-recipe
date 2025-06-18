@@ -1,0 +1,10 @@
+mutation unsaveRecipe($recipe_id: Int, $id: Int!) {
+  delete_bookmarks(
+    where: { recipe_id: { _eq: $recipe_id }, _and: { id: { _eq: $id } } }
+  ) {
+    affected_rows
+    returning {
+      id
+    }
+  }
+}

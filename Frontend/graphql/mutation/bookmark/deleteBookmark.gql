@@ -1,0 +1,8 @@
+mutation deleteBookmark($id: Int!) {
+  delete_bookmarks(where: {id: {_eq: $id}}) {
+    affected_rows
+    returning {
+      recipe_id
+    }
+  }
+}

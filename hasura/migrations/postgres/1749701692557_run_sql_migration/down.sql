@@ -1,0 +1,7 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- alter table "public"."payments"
+--   add constraint "payments_buyer_id_fkey"
+--   foreign key ("buyer_id")
+--   references "public"."users"
+--   ("id") on update no action on delete cascade;

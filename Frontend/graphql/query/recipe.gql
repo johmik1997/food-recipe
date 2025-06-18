@@ -1,0 +1,68 @@
+query getRecipe($recipeId: Int!) {
+  recipes_by_pk(id: $recipeId) {
+    category_id
+    rating{
+      rating
+    }
+    description
+    featured_image
+    price
+    title
+    id
+    prep_time
+    cook_time
+    servings
+    created_at
+    steps {
+      step_number
+      instruction
+    }
+    ingredients {
+      name
+      quantity
+      created_at
+    }
+    user {
+      profile
+      username
+      email
+      id
+      recipes {
+        id
+        featured_image
+        title
+      }
+    }
+    catagory {
+      name
+    }
+    ratings_aggregate {
+      aggregate {
+        count
+      }
+    }
+    likes_aggregate {
+      aggregate {
+        count
+      }
+    }
+    comments {
+      comment
+      created_at
+      user {
+        username
+        profile
+      }
+    }
+    recipe_images {
+      image_url
+      id
+      is_featured
+    }
+    recipe_images_aggregate {
+      aggregate {
+        count
+      }
+    }
+  }
+}

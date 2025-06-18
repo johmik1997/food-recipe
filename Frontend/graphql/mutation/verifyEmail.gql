@@ -1,0 +1,5 @@
+mutation VerifyUser($user_id: Int!, $verification_token: String!) {
+  verifyEmail(user_id: $user_id, verification_token: $verification_token) {
+    message
+  }
+}

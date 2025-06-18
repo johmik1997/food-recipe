@@ -1,0 +1,5 @@
+mutation UpdateProfile($userId: Int!, $userName: String!, $phone: String!) {
+  updateProfile(phone: $phone, userId: $userId, userName: $userName) {
+    message
+  }
+}

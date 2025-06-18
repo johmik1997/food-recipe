@@ -1,0 +1,5 @@
+mutation DeleteRecipe($id: Int!, $user_id: Int!) {
+  DeleteRecipe(id: $id, user_id: $user_id) {
+    message
+  }
+}

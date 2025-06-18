@@ -1,527 +1,810 @@
-<template>
-    <div class="min-h-screen bg-gray-50">
-    <Navbar />
+<script setup>
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useToast } from "vue-toast-notification";
+import { authStore } from "../stores/auth";
+
+useSeoMeta({
+  title: "recipe-app | Recipe Details Page",
+  description: "The project app meta.",
+});
+
+const toast = useToast();
+const route = useRoute();
+const recipeId = parseInt(route.params.id);
+const router = useRouter();
+const recipeStore = useRecipeStore();
+const likeStore = useLikeStore();
+const auth = authStore();
+const commentStore = useCommnentStore();
+const ratingStore = useRatingStore();
+const bookmarkStore = useBookmarkStore();
+
+// Ensure user data is accessed properly
+const userId = computed(() => auth.userId || 0);
+const userName = computed(() => auth.userName || '');
+
+const recipeDetails = ref(null);
+const isLoading = ref(false);
+const comment = ref("");
+const isBookmarked = ref(false);
+const isLiked = ref(false);
+const rating = ref(0);
+const modalRef = ref(null);
+const commentSubmitted = ref(false);
+const rateSubmitted = ref(false);
+const bookMarkId = computed(() => bookmarkStore.bookmarkedId);
+const likedId = computed(() => likeStore.likeId);
+
+const fetchRecipeDetails = async () => {
+  isLoading.value = true;
+  try {
+    console.log("Fetching recipe details for ID:", recipeId);
+    await recipeStore.singleRecipe(recipeId);
+    recipeDetails.value = recipeStore.recipe;
+  } catch (error) {
+    toast.error("Failed to load recipe detail");
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const handleCheckBookmark = async () => {
+  try {
+    const payload = {
+      recipe_id: recipeId,
+      user_id: userId.value,
+    };
+    await bookmarkStore.checkIfBookmarked(payload);
+    isBookmarked.value = bookmarkStore.$state.isBookmarked;
+  } catch (error) {
+    console.error("Error checking bookmark status:", error);
+  }
+};
+
+const handlesaveBookmark = async () => {
+  try {
+    const payload = {
+      recipe_id: recipeId,
+      user_id: userId.value,
+    };
+    await bookmarkStore.createBookmark(payload);
+    isBookmarked.value = true;
+    toast.success("recipe saved successfully!");
+  } catch (error) {
+    console.log("error saving a recipe", error);
+    toast.error("error saving recipe!");
+  }
+};
+
+const handleRemoveBookmark = async () => {
+  try {
+    if (!bookMarkId.value) {
+      toast.error("No bookmark ID found for deletion");
+      return;
+    }
+
+    await bookmarkStore.removeBookmark(bookMarkId.value);
+    toast.success("Bookmark removed successfully!");
+    isBookmarked.value = false;
+  } catch (error) {
+    console.error("Error removing the bookmark:", error);
+    toast.error("Error removing the bookmark");
+  }
+};
+
+const handleComments = async () => {
+  try {
+    const payload = {
+      comment: comment.value,
+      recipe_id: recipeId,
+      user_id: userId.value,
+    };
+
+    const res = await commentStore.createComment(payload);
+    if (res) {
+      commentSubmitted.value = true;
+      comment.value = "";
+      toast.success("Comment submitted successfully!");
+    }
+    fetchRecipeDetails();
+  } catch (error) {
+    console.error("Error submitting comment:", error);
+  }
+};
+
+const handleCheckLike = async () => {
+  try {
+    const payload = {
+      recipe_id: recipeId,
+      user_id: userId.value,
+    };
+    await likeStore.checkIfLiked(payload);
+    isLiked.value = likeStore.$state.isLiked;
+  } catch (error) {
+    console.log("error checking if recipe is liked");
+  }
+};
+
+const handleLikeRecipe = async () => {
+  try {
+    const payload = {
+      recipe_id: recipeId,
+      user_id: userId.value,
+    };
+    const res = await likeStore.likeRecipe(payload);
+    if (res) {
+      isLiked.value = true;
+      toast.success("recipe liked successfully!");
+    }
+    fetchRecipeDetails();
+    handleCheckLike();
+  } catch (error) {
+    toast.error("error liking the recipe");
+  }
+};
+
+const handleRemoveLike = async () => {
+  try {
+    if (!likedId.value) {
+      console.log("no like id found to delete");
+      return;
+    }
+
+    await likeStore.removeLike(likedId.value);
+    isLiked.value = false;
+    fetchRecipeDetails();
+  } catch (error) {
+    toast.error("Error removing the like");
+  }
+};
+
+const handleRating = async () => {
+  try {
+    const payload = {
+      rating: rating.value,
+      recipe_id: recipeId,
+      user_id: userId.value,
+    };
+
+    await ratingStore.createRating(payload);
+    rateSubmitted.value = true;
+    toast.success("thanks for rating");
+    fetchRecipeDetails();
+    closeModal();
+  } catch (error) {
+    console.error("Error rating the recipe:", error);
+  }
+};
+
+const handleBuyRecipe = async () => {
+  if (isNaN(recipeId)) {
+    console.error("Invalid recipe ID");
+    return;
+  }
+
+  try {
+    isLoading.value = true;
+    const res = await recipeStore.buyRecipe({
+      buyer_id: userId.value,
+      recipe_id: recipeId,
+    });
+    const paymentId = recipeStore.$state.paymentId;
+    await recipeStore.getCheckOutUrl(paymentId);
+    const checkout_url = recipeStore.$state.checkoutUrl;
+    window.location.href = checkout_url;
+  } catch (error) {
+    console.error("Error buying recipe:", error);
+    toast.error("Something went wrong. Please try again!");
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const handleGetPaymentDetails = async () => {
+  try {
+    const res = await recipeStore.getPaymentDetails({
+      recipe_id: recipeId,
+      buyer_id: userId.value,
+    });
     
-  <div class="max-w-4xl mx-auto px-4 py-8 md:py-12">
- 
-    <!-- Loading state -->
-    <div v-if="loading" class="text-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-      <p class="mt-4 text-gray-600">Loading recipe...</p>
-    </div>
+    if (!res?.data?.sold_recipes?.[0]?.payments?.[0]) {
+      console.log("No payment details found");
+      recipeStore.$state.paymentStatus = "";
+      return;
+    }
 
-    <!-- Error state -->
-    <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-      <p class="font-medium">Error loading recipe: {{ error.message }}</p>
-      <button 
-        @click="fetchRecipe" 
-        class="mt-2 px-4 py-2 bg-red-100 hover:bg-red-200 rounded-lg text-red-700 font-medium transition-colors"
-      >
-        Retry
-      </button>
-    </div>
+    const paymentDetails = res.data.sold_recipes[0].payments[0];
+    recipeStore.paymentDetails = paymentDetails;
+    recipeStore.tx_ref = paymentDetails.tx_ref;
+    recipeStore.paymentId = paymentDetails.id;
+    recipeStore.paymentStatus = paymentDetails.payment_status;
+  } catch (error) {
+    console.error("Error getting payment details:", error);
+  }
+};
 
-    <!-- Recipe content -->
-    <div v-if="recipe" class="space-y-10">
-      <!-- Recipe header -->
-      <div class="space-y-4">
-        <div>
-          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">{{ recipe.title }}</h1>
-          
-          <div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-gray-600">
-            <span v-if="recipe.prep_time" class="flex items-center">
-              <ClockIcon class="h-5 w-5 mr-2 text-gray-500" />
-              Prep: {{ recipe.prep_time }} min
-            </span>
-            <span v-if="recipe.cook_time" class="flex items-center">
-              <FireIcon class="h-5 w-5 mr-2 text-gray-500" />
-              Cook: {{ recipe.cook_time }} min
-            </span>
-            <span v-if="recipe.servings" class="flex items-center">
-              <UsersIcon class="h-5 w-5 mr-2 text-gray-500" />
-              Serves: {{ recipe.servings }}
-            </span>
-          </div>
-        </div>
+const handleVerifyPayment = async () => {
+  try {
+    const tx_ref = recipeStore?.paymentDetails?.tx_ref;
+    const paymentId = recipeStore?.paymentDetails?.id;
+    
+    if (!paymentId || !tx_ref) {
+      console.error("Missing payment details for verification");
+      return;
+    }
+    
+    await recipeStore.verifyPayment({ id: paymentId, tx_ref });
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+  }
+};
 
-        <!-- Featured image -->
-        <div v-if="recipe.feature_image_url" class="rounded-xl overflow-hidden shadow-lg">
-          <img 
-            :src="recipe.feature_image_url" 
-            :alt="recipe.title" 
-            class="w-full h-96 object-cover"
-            loading="lazy"
-          />
-        </div>
-      </div>
+// Delete recipe functionality
+const recipeToDeleteId = ref(null);
+const deleteModalRef = ref(null);
 
-      <!-- Description -->
-      <div v-if="recipe.description" class="prose max-w-none text-lg text-gray-700 leading-relaxed">
-        <p>{{ recipe.description }}</p>
-      </div>
+const openDeleteModal = (recipeId) => {
+  recipeToDeleteId.value = recipeId;
+  deleteModalRef.value?.showModal();
+};
 
-      <!-- Ingredients -->
-      <div class="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm">
-        <h2 class="text-2xl font-bold mb-5 text-gray-900 flex items-center">
-          <ClipboardListIcon class="h-6 w-6 mr-2 text-blue-600" />
-          Ingredients
-        </h2>
-        <ul class="space-y-3">
-          <li 
-            v-for="(ingredient, index) in recipe.recipe_ingredients" 
-            :key="index" 
-            class="flex items-start group"
+const closeDeleteModal = () => {
+  deleteModalRef.value?.close();
+};
+
+const confirmDelete = async () => {
+  if (recipeToDeleteId.value) {
+    try {
+      await handleDeleteRecipe(recipeToDeleteId.value);
+      toast.success("Recipe deleted successfully!");
+      router.push("/recipes");
+    } catch (error) {
+      toast.error("Error deleting recipe. Please try again");
+    }
+  }
+};
+
+const handleDeleteRecipe = async (recipe_id) => {
+  try {
+    await recipeStore.deleteRecipes({ id: recipe_id, user_id: userId.value });
+    await auth.getProfile();
+    await recipeStore.getSellerRecipes();
+    router.push("/recipes");
+  } catch (error) {
+    toast.error("Something went wrong! Please try again.");
+  }
+};
+
+onMounted(() => {
+  fetchRecipeDetails();
+  handleCheckBookmark();
+  handleCheckLike();
+  handleGetPaymentDetails();
+});
+const openModal = () => {
+  if (modalRef.value) modalRef.value.showModal();
+};
+
+const closeModal = () => {
+  if (modalRef.value) modalRef.value.close();
+};
+
+</script>
+
+
+<template>
+  <div>
+    <!-- Delete Confirmation Modal -->
+    <dialog ref="deleteModalRef" class="modal">
+      <div class="modal-box bg-white">
+        <!-- Close button -->
+        <form method="dialog">
+          <button
+            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 text-green-600"
+            @click="closeDeleteModal"
           >
-            <span class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 mt-0.5 mr-3 flex-shrink-0 group-hover:bg-blue-200 transition-colors">
-              <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
-            </span>
-            <span class="text-gray-700">
-              <span v-if="ingredient.quantity" class="font-medium">{{ ingredient.quantity }}</span>
-              <span v-if="ingredient.unit" class="ml-1 text-gray-600">{{ ingredient.unit }}</span>
-              <span class="ml-2">{{ ingredient.name }}</span>
-            </span>
-          </li>
-        </ul>
+            ✕
+          </button>
+        </form>
+
+        <!-- Modal title -->
+        <h3 class="text-lg font-bold text-green-800">Confirm Deletion</h3>
+
+        <!-- Modal content -->
+        <p class="py-4 text-green-700">Are you sure you want to delete this recipe?</p>
+
+        <!-- Modal action buttons -->
+        <div class="flex justify-end gap-4">
+          <button
+            @click="closeDeleteModal"
+            class="btn bg-green-100 text-green-800 hover:bg-green-200"
+          >
+            Cancel
+          </button>
+          <button
+            @click="confirmDelete"
+            class="btn bg-red-100 text-red-800 hover:bg-red-200"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </dialog>
+
+    <div v-if="isLoading" class="flex justify-center items-center h-screen">
+      <div
+        class="animate-spin rounded-full h-[80px] w-[80px] border-t-2 border-b-2 border-green-500"
+      ></div>
+    </div>
+
+    <div v-else-if="recipeDetails" class="font-poppins container mx-auto bg-white min-h-screen">
+      <!-- Recipe Header -->
+      <div class="bg-white overflow-hidden pt-6">
+        <div class="flex flex-col md:flex-row gap-2 md:gap-12">
+          <!-- left side -->
+          <div class="flex-[3.5]">
+            <div class="mb-6">
+              <img
+                :src="recipeDetails.featured_image || '/images/recipe-placeholder.jpg'"
+                :alt="recipeDetails.title"
+                class="w-full h-full object-cover rounded-lg"
+              />
+            </div>
+          </div>
+          
+          <!-- Middle Section: Recipe Title and Details -->
+          <div class="flex-[5] flex flex-col items-center justify-center">
+            <div class="flex flex-col items-center">
+              <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-green-800 mb-4 pl-10 font-poppins-italic">
+                {{ recipeDetails.title }}
+              </h1>
+              <div>
+                <p class="text-green-700 font-bold text-xl mt-2">
+                  by {{ recipeDetails.user.username }}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-center space-x-6 mb-6 w-full">
+              <div class="flex flex-row justify-between items-center space-x-4 p-4 mt-2">
+                <!-- Category Section -->
+                <div class="flex flex-col items-center flex-2">
+                  <span class="text-green-800 font-semibold">
+                    <img src="/icons/fork-and-spoon-meal-2-svgrepo-com.svg" class="w-8 h-8" alt=""/>
+                  </span>
+                  <span class="text-green-700 w-full">
+                    {{ recipeDetails.catagory.name }}
+                  </span>
+                </div>
+
+                <!-- Divider Line -->
+                <div class="h-10 w-1 bg-green-300 mx-2"></div>
+
+                <!-- Price Section -->
+                <div class="flex flex-[1] flex-col items-center">
+                  <span class="text-green-800 font-semibold">
+                    <img src="/icons/money-bag-svgrepo-com.svg" class="w-8 h-8" alt=""/>
+                  </span>
+                  <span class="text-green-700">${{ recipeDetails.price }}</span>
+                </div>
+
+                <!-- Divider Line -->
+                <div class="h-10 w-1 bg-green-300 mx-2"></div>
+
+                <!-- Cook Time Section -->
+                <div class="flex flex-col items-center flex-2">
+                  <span class="text-green-800 font-semibold">
+                    <img src="/icons/clock-lines-svgrepo-com.svg" class="w-8 h-8" alt=""/>
+                  </span>
+                  <span class="text-green-700">
+                    {{ recipeDetails.prep_time }} min
+                  </span>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-2 mt-2">
+                <div class="flex flex-row gap-1">
+                  <span
+                    v-for="star in 5"
+                    :key="star"
+                    class="text-2xl"
+                    :class="{
+                      'text-yellow-500': star <= Math.round(recipeDetails.rating.rating),
+                      'text-yellow-100': star > Math.round(recipeDetails.rating.rating),
+                    }"
+                  >
+                    ★
+                  </span>
+                  <span class="font-semibold mt-1 text-green-700">
+                    ({{ recipeDetails.ratings_aggregate.aggregate.count }})
+                  </span>
+                </div>
+              </div>
+
+              <div class="flex flex-row pt-4 md:pt-10 gap-2 md:gap-4 items-center">
+                <!-- Owner Actions -->
+                <div
+                  class="flex flex-row gap-4"
+                  v-if="Number(recipeDetails.user.id) === Number(auth.$state.userId)"
+                >
+                  <NuxtLink
+                    :to="`/recipes/update/${recipeDetails.id}`"
+                    class="btn bg-green-100 ring-1 ring-green-500 py-2 px-4 rounded-full hover:bg-green-300"
+                  >
+                    <img src="/icons/edit-user-2-svgrepo-com.svg" alt="update icon" class="w-8 h-8"/>
+                    <span class="text-xs text-green-700 hidden md:block">update recipe</span>
+                  </NuxtLink>
+                  <button
+                    @click="openDeleteModal(recipeDetails.id)"
+                    class="btn bg-green-100 ring-1 ring-green-500 py-2 px-4 rounded-full hover:bg-green-300"
+                  >
+                    <img src="/icons/delete-svgrepo-com.svg" class="h-8 w-8" />
+                    <span class="text-xs text-green-700 hidden md:block">delete recipe</span>
+                  </button>
+                </div>
+
+                <!-- Visitor Actions -->
+                <div v-else class="flex flex-row md:pt-4 gap-2 md:gap-4 lg:gap-5 items-center">
+                  <!-- Rating Button -->
+                  <div class="">
+                    <button class="flex flex-col items-center justify-center" @click="openModal">
+                      <img src="/icons/rating-svgrepo-com.svg" class="h-8 w-8" alt=""/>
+                      <span class="text-xs text-yellow-500 hidden md:block">rate</span>
+                      <div class="rating">
+  <input type="radio" name="rating-2" value="1" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
+  <input type="radio" name="rating-2" value="2" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
+  <input type="radio" name="rating-2" value="3" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
+  <input type="radio" name="rating-2" value="4" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
+  <input type="radio" name="rating-2" value="5" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
+</div>
+
+                    </button>
+                    <!-- Rating Modal -->
+                    <dialog ref="modalRef" id="my_modal_1" class="modal">
+                      <div class="modal-box bg-white">
+                        <!-- Close button -->
+                        <form method="dialog">
+                          <button
+                            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 text-green-600"
+                            @click="closeModal"
+                          >
+                            ✕
+                          </button>
+                        </form>
+
+                        <!-- Modal title -->
+                        <h3 class="text-lg font-bold text-green-800">Rate this Recipe</h3>
+
+                        <!-- Rating input -->
+                        <div class="py-4 items-center">
+                          <div class="rating">
+                            <input
+                              type="radio"
+                              name="rating-2"
+                              class="mask mask-star-2 bg-green-400"
+                              value="1"
+                              v-model="rating"
+                              aria-label="1 star"
+                            />
+                            <!-- ... other rating inputs ... -->
+                          </div>
+                        </div>
+
+                        <!-- Submit button -->
+                        <div class="flex justify-end mt-2">
+                          <button
+                            @click.prevent="handleRating"
+                            class="bg-green-100 ring-1 ring-green-500 py-2 px-4 rounded-full hover:bg-green-300 text-green-700"
+                          >
+                            Submit
+                          </button>
+                        </div>
+                      </div>
+                    </dialog>
+                  </div>
+
+                  <!-- Like/Unlike Button -->
+                  <div>
+                    <button
+                      v-if="isLiked"
+                      @click="handleRemoveLike"
+                      class="flex flex-col items-center justify-center"
+                    >
+                      <img src="\public\icons\like-svgrepo-com.svg" class="w-8 h-8"/>
+                      <span class="text-xs text-green-700 hidden md:block">
+                        unlike({{ recipeDetails.likes_aggregate.aggregate.count }})
+                      </span>
+                    </button>
+                    <button
+                      v-else
+                      @click="handleLikeRecipe"
+                      class="flex flex-col items-center justify-center"
+                    >
+                      <img src="\public\icons\like-svgrepo-com.svg" class="w-8 h-8"/>
+                      <span class="text-xs text-green-700 hidden md:block">
+                        like({{ recipeDetails.likes_aggregate.aggregate.count }})
+                      </span>
+                    </button>
+                  </div>
+
+                  <!-- Comment Button -->
+                  <div>
+                    <button class="flex flex-col items-center justify-center" onclick="my_modal_3.showModal()">
+                      <img src="/icons/comment-svgrepo-com.svg" class="w-8 h-8" alt=""/>
+                      <span class="text-xs text-green-700 hidden md:block">Comment</span>
+                    </button>
+
+                    <dialog id="my_modal_3" class="modal">
+                      <div class="modal-box bg-white">
+                        <form method="dialog">
+                          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 text-green-600">
+                            ✕
+                          </button>
+                        </form>
+
+                        <h3 class="text-lg font-bold text-green-800">
+                          Hello {{ auth.$state.userName }} !
+                        </h3>
+
+                        <div v-if="commentSubmitted">
+                          <p class="py-4 text-green-700">Thanks for your comment!</p>
+                        </div>
+                        <div v-else>
+                          <input
+                            v-model="comment"
+                            type="text"
+                            class="p-2 w-full border border-green-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                            placeholder="Write a comment..."
+                          />
+                        </div>
+
+                        <div class="flex justify-end mt-2">
+                          <button
+                            @click.prevent="handleComments"
+                            class="bg-green-100 ring-1 ring-green-500 py-2 px-4 rounded-full hover:bg-green-300 text-green-700"
+                          >
+                            Submit
+                          </button>
+                        </div>
+                      </div>
+                    </dialog>
+                  </div>
+
+                  <!-- Bookmark Button -->
+                  <button
+                    v-if="isBookmarked"
+                    @click="handleRemoveBookmark"
+                    class="flex flex-col items-center justify-center"
+                  >
+                    <img src="/icons/bookkkmark.svg" class="h-8 w-8" alt="" />
+                    <span class="text-xs text-green-700 hidden md:block">unsave</span>
+                  </button>
+                  <button
+                    v-else
+                    @click="handlesaveBookmark"
+                    class="flex flex-col items-center justify-center"
+                  >
+                    <img src="/icons/save.svg" class="h-8 w-8" alt="" />
+                    <span class="text-xs text-green-700 hidden md:block">save</span>
+                  </button>
+
+                  <!-- Buy Button -->
+                  <button
+                    v-if="!recipeStore.$state.paymentStatus === 'paid'"
+                    @click="handleBuyRecipe"
+                    class="btn bg-green-100 ring-1 text-center ring-green-500 py-1 md:py-2 px-2 md:px-4 rounded-full hover:bg-green-300 text-green-700"
+                  >
+                    {{ isLoading ? "Loading..." : "Buy Now" }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right Side: Additional Recipe Images -->
+          <div class="flex-[2.5] flex justify-center items-center">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 lg:grid-rows-4 gap-2 w-full container mx-auto">
+              <div
+                v-for="(image, index) in recipeDetails.recipe_images.slice(0, 4)"
+                :key="image.id"
+                class="relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 w-full"
+              >
+                <img
+                  :src="image.image_url"
+                  :alt="`Recipe Image ${index + 1}`"
+                  class="w-full h-[110px] object-cover transform transition-transform duration-300 hover:scale-105"
+                />
+                <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-300"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Description Section -->
+        <div class="flex flex-col">
+          <p class="text-green-800 text-sm mb-6">
+            {{ recipeDetails.description }}
+          </p>
+          <div class="flex items-center space-x-2">
+            <div class="flex flex-row">
+              <span class="text-green-800 font-semibold">Created at:</span>
+              <span class="text-green-700 ml-2">
+                {{ new Date(recipeDetails.created_at).toDateString() }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe Content (Ingredients & Steps) -->
+        <div>
+          <!-- Payment Status Messages -->
+          <button
+            @click="handleVerifyPayment"
+            v-if="recipeStore?.paymentDetails?.payment_status === 'pending'"
+            class="p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 w-full text-center"
+          >
+            Click here to verify your payment and unlock the full recipe.
+          </button>
+
+          <!-- Unlocked Content -->
+          <div
+            v-else-if="recipeStore?.paymentDetails?.payment_status === 'paid' || 
+                     Number(recipeDetails.user.id) === Number(auth.$state.userId)"
+            class="p-8 flex flex-col md:flex-row"
+          >
+            <!-- Ingredients -->
+            <div class="mb-8 md:mb-0 md:flex-1 md:pr-8 md:border-r-4 md:border-green-300">
+              <h2 class="text-2xl font-bold text-green-800 mb-4 relative">
+                Ingredients
+                <span class="absolute bottom-0 left-0 w-16 h-1 bg-green-500 mt-2"></span>
+              </h2>
+              <ul class="flex flex-col gap-4">
+                <li v-for="(ingredient, index) in recipeDetails.ingredients" :key="index">
+                  <span class="text-green-800 font-semibold">{{ ingredient.name }}</span>
+                  <span class="text-green-600"> -> </span>
+                  <span class="text-green-700 ml-2">{{ ingredient.quantity }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Steps -->
+            <div class="mb-8 md:flex-1 md:pl-8">
+              <h2 class="text-2xl font-bold text-green-800 mb-4 relative">
+                Steps
+                <span class="absolute bottom-0 left-0 w-16 h-1 bg-green-500"></span>
+              </h2>
+              <ol class="space-y-4">
+                <li v-for="(step, index) in recipeDetails.steps" :key="index">
+                  <span class="text-green-800 font-bold text-lg">Step {{ step.step_number }}:</span>
+                  <span class="text-green-700 ml-2">{{ step.instruction }}</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+          
+          <!-- Locked Content Message -->
+          <div v-else class="flex justify-center items-center">
+            <div class="p-4 bg-blue-100 border-l-4 w-1/2 border-blue-500 text-blue-700 flex flex-col items-center mt-3 md:mt-2">
+              <p>Purchase this recipe to unlock the full instructions and ingredients.</p>
+              <button
+                @click="handleBuyRecipe"
+                class="btn bg-green-100 mt-2 ring-1 text-center ring-green-500 py-1 md:py-2 px-2 md:px-4 rounded-full hover:bg-green-300 text-green-700"
+              >
+                {{ isLoading ? "Loading..." : "Buy Now" }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Steps -->
-      <div class="space-y-8">
-        <h2 class="text-2xl font-bold mb-6 text-gray-900 flex items-center">
-          <BookOpenIcon class="h-6 w-6 mr-2 text-blue-600" />
-          Instructions
-        </h2>
-        <div 
-          v-for="step in recipe.recipe_steps" 
-          :key="step.step_number" 
-          class="flex group hover:bg-gray-50 rounded-lg p-3 transition-colors"
+      <!-- Comments Section -->
+      <h1 class="text-center text-xl md:text-3xl text-green-800 font-bold pt-4 mb-2 font-poppins-italic">
+        What others say about this recipe
+      </h1>
+      
+      <div v-if="recipeDetails.comments && recipeDetails.comments.length > 0" class="flex flex-col md:flex-row gap-4 items-center justify-center">
+        <div
+          v-for="(comment, index) in recipeDetails.comments.slice(0, 3)"
+          :key="index"
+          class="card bg-green-50 text-green-800 w-96 mt-5"
         >
-          <div class="flex-shrink-0 mr-4">
-            <span class="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white font-bold group-hover:bg-blue-700 transition-colors">
-              {{ step.step_number }}
-            </span>
-          </div>
-          <div class="prose max-w-none flex-1">
-            <p class="text-gray-800">{{ step.instruction }}</p>
-            <img 
-              v-if="step.image_url" 
-              :src="step.image_url" 
-              :alt="`Step ${step.step_number}`"
-              class="mt-4 rounded-lg shadow-md max-w-full border border-gray-200"
-              loading="lazy"
-            />
+          <div class="card-body items-center text-center">
+            <div class="flex items-center gap-3">
+              <img
+                :src="comment.user.profile || '/images/default-avatar.png'"
+                alt="User Profile"
+                class="h-10 w-10 rounded-full"
+              />
+              <div>
+                <h4 class="font-semibold text-green-800">
+                  {{ comment.user.username }}
+                </h4>
+                <p class="text-green-600">
+                  {{ comment.comment }}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
       
-      <!-- Additional images -->
-      <div v-if="recipe.images && recipe.images.length > 0" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div 
-          v-for="(image, index) in recipe.images" 
-          :key="index"
-          class="overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow"
-        >
-          <img 
-            :src="image.image_url" 
-            :alt="`Recipe image ${index + 1}`"
-            class="w-full h-48 md:h-56 object-cover hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
+      <div v-else class="flex flex-col items-center justify-center text-green-400 text-center relative group">
+        <img
+          src="\public\Empty-cuate.svg"
+          alt="No comments"
+          class="h-[300px] w-[300px] transition-transform duration-300 group-hover:scale-105"
+        />
+        <div class="absolute inset-0 bg-green-800 bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <span class="text-white font-bold text-lg">
+            No comments yet. Be the first to leave one!
+          </span>
         </div>
       </div>
 
-      <!-- Reviews Section -->
-      <div class="mt-12 pt-8 border-t border-gray-200">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-          <h2 class="text-2xl font-bold text-gray-900 flex items-center">
-            <StarIcon class="h-6 w-6 mr-2 text-blue-600" />
-            Reviews
-          </h2>
-          <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div class="flex items-center">
-              <div class="flex items-center mr-2">
-                <StarIcon v-for="i in 5" :key="i" 
-                  class="h-5 w-5"
-                  :class="i <= Math.round(recipe.average_rating) ? 'text-yellow-400' : 'text-gray-300'"
-                />
-              </div>
-              <span class="text-gray-700 ml-1">
-                <span class="font-medium">{{ recipe.average_rating?.toFixed(1) || '0.0' }}</span>
-                <span class="text-gray-500"> ({{ recipe.review_count || 0 }} reviews)</span>
-              </span>
-            </div>
-            <button 
-              @click="handleReviewButtonClick"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center"
-            >
-              <PencilIcon class="h-5 w-5 mr-2" />
-              Write a Review
-            </button>
-          </div>
-        </div>
+      <!-- More Recipes by Author -->
+      <div class="p-6">
+        <h1 class="text-xl md:text-3xl font-bold font-poppins-italic mb-8 text-green-800 text-center">
+          More recipes by 
+          <span class="text-green-800 text-xl md:text-3xl underline decoration-green-500 decoration-4">
+            {{ recipeDetails.user.username }}
+          </span>
+        </h1>
 
-        <!-- Review Form -->
-        <div 
-          v-if="showReviewForm" 
-          class="bg-white p-6 rounded-xl shadow-md mb-8 border border-gray-100"
-        >
-          <h3 class="text-xl font-medium mb-5 text-gray-900">Add Your Review</h3>
-          <form @submit.prevent="submitReview">
-            <div class="mb-5">
-              <label class="block text-gray-700 mb-2 font-medium">Rating <span class="text-red-500">*</span></label>
-              <div class="flex">
-                <button 
-                  v-for="i in 5" 
-                  :key="i"
-                  type="button"
-                  @click="newReview.rating = i"
-                  class="focus:outline-none transform hover:scale-110 transition-transform"
-                >
-                  <StarIcon 
-                    class="h-8 w-8"
-                    :class="i <= newReview.rating ? 'text-yellow-400' : 'text-gray-300'"
-                  />
-                </button>
-              </div>
-              <p v-if="!newReview.rating && formSubmitted" class="text-red-500 text-sm mt-1">
-                Please select a rating
-              </p>
-            </div>
-            <div class="mb-5">
-              <label for="comment" class="block text-gray-700 mb-2 font-medium">Comment (optional)</label>
-              <textarea
-                id="comment"
-                v-model="newReview.comment"
-                rows="4"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                placeholder="Share your thoughts about this recipe..."
-              ></textarea>
-            </div>
-            <div class="flex justify-end gap-3">
-              <button
-                type="button"
-                @click="showReviewForm = false"
-                class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center"
-                :disabled="submittingReview"
-              >
-                <span v-if="submittingReview" class="flex items-center">
-                  <SpinnerIcon class="animate-spin h-4 w-4 mr-2" />
-                  Submitting...
-                </span>
-                <span v-else>Submit Review</span>
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Reviews List -->
-        <div v-if="recipe.combined_reviews?.length > 0" class="space-y-6">
-          <div 
-            v-for="review in recipe.combined_reviews" 
-            :key="review.id" 
-            class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 transition-colors"
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+          <NuxtLink
+            v-for="(recipe, index) in recipeDetails.user.recipes.slice(0, 5)"
+            :key="index"
+            :to="`/recipes/${recipe.id}`"
+            class="block overflow-hidden hover:-translate-y-2"
           >
-            <div class="flex items-start">
-              <img 
-                :src="review.user.avatar_image_url || '/placeholder-user.jpg'" 
-                :alt="review.user.name"
-                class="h-10 w-10 rounded-full object-cover mr-4 flex-shrink-0"
+            <div class="relative h-48 overflow-hidden">
+              <img
+                :src="recipe.featured_image || '\public\Chef-cuate.svg'"
+                :alt="recipe.title"
+                class="w-full h-full object-cover"
               />
-              <div class="flex-1">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <h4 class="font-medium text-gray-900">{{ review.user.name }}</h4>
-                  <span class="text-sm text-gray-500 mt-1 sm:mt-0">{{ formatDate(review.created_at) }}</span>
-                </div>
-                <div v-if="review.rating" class="flex items-center mt-2 mb-3">
-                  <StarIcon v-for="i in 5" :key="i" 
-                    class="h-5 w-5"
-                    :class="i <= review.rating ? 'text-yellow-400' : 'text-gray-300'"
-                  />
-                </div>
-                <p class="text-gray-700 whitespace-pre-line">{{ review.comment }}</p>
-              </div>
+              <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-300"></div>
             </div>
-          </div>
-        </div>
-
-        <div v-else class="bg-white p-8 text-center rounded-xl shadow-sm border border-gray-100">
-          <ChatBubbleBottomCenterTextIcon class="h-10 w-10 mx-auto text-gray-400" />
-          <p class="text-gray-600 mt-3">No reviews yet. Be the first to review!</p>
+            <div class="p-4">
+              <h2 class="text-xl font-semibold text-green-800 mb-2">
+                {{ recipe.title }}
+              </h2>
+            </div>
+          </NuxtLink>
         </div>
       </div>
     </div>
   </div>
-<Footer/>
-    </div>
 </template>
 
-<script setup>
-import { useRoute } from 'vue-router'
-import { ClockIcon, FireIcon, UsersIcon, StarIcon } from '@heroicons/vue/outline'
-import { computed, ref, onMounted } from 'vue'
-import gql from 'graphql-tag'
-import { useQuery, useMutation } from '@vue/apollo-composable'
-import { useHead } from '#imports'
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
-const route = useRoute()
-const recipeId = route.params.id
-const userId = ref(null)
-const isAuthenticated = ref(false)
-
-// Review form state
-const showReviewForm = ref(false)
-const newReview = ref({
-  rating: 0,
-  comment: ''
-})
-const submittingReview = ref(false)
-const formSubmitted = ref(false)
-
-// Get user ID from localStorage when component mounts
-onMounted(() => {
-  const userStr = localStorage.getItem("user")
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr)
-      userId.value = user.id
-      isAuthenticated.value = true
-    } catch (e) {
-      console.error("Failed to parse user data", e)
-    }
-  }
-})
-
-// GraphQL queries
-const GET_RECIPE_BY_ID = gql`
-  query GetRecipeById($id: uuid!) {
-    recipes_by_pk(id: $id) {
-      id
-      title
-      description
-      prep_time
-      cook_time
-      servings
-      feature_image_url
-      created_at
-      user {
-        id
-        name
-      }
-      recipe_ingredients {
-        name
-        quantity
-        unit
-      }
-      recipe_steps(order_by: {step_number: asc}) {
-        step_number
-        instruction
-        image_url
-      }
-      recipe_images(where: {is_featured: {_eq: false}}) {
-        image_url
-      }
-      recipe_categories {
-        category {
-          id
-          name
-        }
-      }
-      comments(order_by: {created_at: desc}) {
-        id
-        content
-        created_at
-        user {
-          id
-          name
-          avatar_image_url
-        }
-      }
-      ratings {
-        value
-        user_id
-      }
-      ratings_aggregate {
-        aggregate {
-          avg {
-            value
-          }
-          count
-        }
-      }
-    }
-  }
-`
-
-const ADD_RATING = gql`
-  mutation AddRating($recipeId: uuid!, $value: Int!, $userId: uuid!) {
-    insert_ratings_one(object: {
-      recipe_id: $recipeId,
-      value: $value,
-      user_id: $userId
-    }) {
-      id
-      value
-      created_at
-      user {
-        id
-        name
-      }
-    }
-  }
-`
-
-const ADD_COMMENT = gql`
-  mutation AddComment($recipeId: uuid!, $content: String!, $userId: uuid!) {
-    insert_comments_one(object: {
-      recipe_id: $recipeId,
-      content: $content,
-      user_id: $userId
-    }) {
-      id
-      content
-      created_at
-      user {
-        id
-        name
-        avatar_image_url
-      }
-    }
-  }
-`
-
-const { result, loading, error, refetch } = useQuery(GET_RECIPE_BY_ID, {
-  id: recipeId
-})
-
-const { mutate: addRating } = useMutation(ADD_RATING)
-const { mutate: addComment } = useMutation(ADD_COMMENT)
-
-const recipe = computed(() => {
-  if (!result.value?.recipes_by_pk) return null
-  
-  return {
-    ...result.value.recipes_by_pk,
-    average_rating: result.value.recipes_by_pk.ratings_aggregate.aggregate?.avg?.value || 0,
-    review_count: result.value.recipes_by_pk.ratings_aggregate.aggregate?.count || 0,
-    combined_reviews: result.value.recipes_by_pk.comments.map(comment => {
-      if (!comment || !comment.user) {
-        return {
-          id: comment?.id || 'unknown',
-          user: {
-            id: 'unknown',
-            name: 'Anonymous',
-            avatar_image_url: '/placeholder-user.jpg'
-          },
-          rating: null,
-          comment: comment?.content || '',
-          created_at: comment?.created_at || new Date().toISOString()
-        }
-      }
-      const userRating = result.value.recipes_by_pk.ratings.find(
-        r => r.user_id === comment.user.id
-      )
-      return {
-        id: comment.id,
-        user: comment.user,
-        rating: userRating?.value || null,
-        comment: comment.content,
-        created_at: comment.created_at
-      }
-    })
-  }
-})
-
-// Handle review button click with authentication check
-const handleReviewButtonClick = () => {
-  if (!isAuthenticated.value) {
-    alert('Please log in to write a review')
-    return
-  }
-  showReviewForm.value = !showReviewForm.value
+.font-poppins {
+  font-family: "Poppins", sans-serif;
+}
+.font-poppins-italic {
+  font-family: "Poppins", sans-serif;
+  font-style: italic;
 }
 
-const submitReview = async () => {
-  // Check if user is authenticated
-  if (!isAuthenticated.value) {
-    alert('Please log in to submit a review')
-    return
-  }
-
-  formSubmitted.value = true
-  
-  if (!newReview.value.rating) {
-    return
-  }
-
-  submittingReview.value = true
-  try {
-    // Submit rating
-    await addRating({
-      recipeId: recipeId,
-      value: newReview.value.rating,
-      userId: userId.value
-    })
-    
-    // Submit comment if provided
-    if (newReview.value.comment.trim()) {
-      await addComment({
-        recipeId: recipeId,
-        content: newReview.value.comment,
-        userId: userId.value
-      })
-    }
-    
-    // Reset form and refresh data
-    showReviewForm.value = false
-    newReview.value = { rating: 0, comment: '' }
-    formSubmitted.value = false
-    await refetch()
-  } catch (error) {
-    console.error('Error submitting review:', error)
-    alert('Failed to submit review. Please try again.')
-  } finally {
-    submittingReview.value = false
-  }
+/* Custom green-themed styles */
+.modal-box {
+  background-color: white;
+  color: #1a5632;
 }
 
-const fetchRecipe = () => {
-  refetch()
+.card {
+  background-color: #f0fff4;
+  border: 1px solid #c6f6d5;
 }
 
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
-  })
+.btn {
+  transition: all 0.3s ease;
 }
 
-// Set page title
-useHead({
-  title: computed(() => recipe.value ? `${recipe.value.title} - FoodRecipe` : 'Loading Recipe...'),
-  meta: [
-    {
-      name: 'description',
-      content: computed(() => recipe.value?.description || 'View this delicious recipe')
-    }
-  ]
-})
-</script>
-
-<style scoped>
-.prose {
-  color: #374151; /* gray-700 */
-  line-height: 1.75;
-}
-
-.prose p {
-  margin-bottom: 1rem;
+.rating input:checked ~ input {
+  color: #c6f6d5;
 }
 </style>

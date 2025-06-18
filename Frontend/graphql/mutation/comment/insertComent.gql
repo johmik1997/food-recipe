@@ -1,0 +1,8 @@
+mutation insertComment($comment: String!, $recipe_id: Int!) {
+  insert_comments(objects: { comment: $comment, recipe_id: $recipe_id }) {
+    affected_rows
+    returning {
+      comment
+    }
+  }
+}

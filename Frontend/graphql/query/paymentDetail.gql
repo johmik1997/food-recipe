@@ -1,0 +1,11 @@
+query getPaymentDetail($recipe_id: Int!, $buyer_id: Int!) {
+  sold_recipes(
+    where: { recipe_id: { _eq: $recipe_id }, buyer_id: { _eq: $buyer_id } }
+  ) {
+    payments {
+      tx_ref
+      id
+      payment_status
+    }
+  }
+}

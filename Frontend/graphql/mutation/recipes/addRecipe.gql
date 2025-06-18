@@ -1,0 +1,33 @@
+mutation addRecipe(
+  $price: Int!
+  $description: String!
+  $category_id: Int!
+  $prep_time: Int!
+  $cook_time: Int!
+  $servings: Int!
+  $title: String!
+  $user_id: Int!
+  $ingredients: [IngredientRequest!]!
+  $steps: [StepRequest!]!
+  $base64String: String
+  $type: String
+  $name: String
+) {
+  addRecipe(
+    price: $price
+    description: $description
+    category_id: $category_id
+    ingredients: $ingredients
+    prep_time: $prep_time
+    cook_time: $cook_time
+    servings: $servings
+    title: $title
+    user_id: $user_id
+    steps: $steps
+    featured_image: { base64String: $base64String, name: $name, type: $type }
+  ) {
+    title
+    message
+    id
+  }
+}
