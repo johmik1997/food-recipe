@@ -87,16 +87,16 @@ func UpdateRecipe() gin.HandlerFunc {
 				CategoryId      graphql.Int    `graphql:"category_id"`
 				UserId          graphql.Int    `graphql:"user_id"`
 				Price           graphql.Int    `graphql:"price"`
-			} `graphql:"update_recipes_by_pk(pk_columns: {id: $id}, _set: {title: $title, description: $description, preparation_time: $preparation_time, featured_image: $featured_image, category_id: $category_id, price: $price, user_id: $user_id})"`
+			} `graphql:"update_recipes_by_pk(pk_columns: {id: $id}, _set: {title: $title, description: $description, prep_time: $prep_time,cook_time:$cook_time,servings:$servings, featured_image: $featured_image, category_id: $category_id, price: $price, user_id: $user_id})"`
 		}
 
 		mutationVars := map[string]interface{}{
 			"id":               graphql.Int(request.Input.ID),
 			"title":            graphql.String(request.Input.Title),
 			"description":      graphql.String(request.Input.Description),
-			"prep_time": graphql.Int(request.Input.PreparationTime),
-			"cook_time":graphql.Int(request.Input.CookTime),
-			"servings": graphql.Int(request.Input.Servings),
+			"prep_time":     graphql.Int(request.Input.PreparationTime),
+			"cook_time":      graphql.Int(request.Input.CookTime),
+			"servings":       graphql.Int(request.Input.Servings),
 			"featured_image":   graphql.String(featuredImage),
 			"category_id":      graphql.Int(request.Input.CategoryId),
 			"user_id":          graphql.Int(request.Input.UserId),

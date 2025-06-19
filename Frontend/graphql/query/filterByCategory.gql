@@ -24,7 +24,7 @@ query filterByCategory($name: String, $limit: Int!, $offset: Int!) {
         count
       }
     }
-    categories {
+    catagory {
       name
     }
     title

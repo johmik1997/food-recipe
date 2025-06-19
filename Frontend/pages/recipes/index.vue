@@ -1,27 +1,39 @@
 <script setup>
 import { useToast } from "vue-toast-notification";
 import { onMounted, ref, computed, reactive } from "vue";
-
 import { useRoute } from "vue-router";
+
 const toast = useToast();
 const route = useRoute();
 const recipesStore = useRecipeStore();
-
-const searchQuery = ref("");
 const userStore = authStore();
 const bookmarkStore = useBookmarkStore();
 const likeStore = useLikeStore();
+
+// Search and pagination
+const searchQuery = ref("");
+const currentPage = ref(1);
+const itemsPerPage = ref(4); // Adjust as needed
+const totalPages = computed(() => Math.ceil(recipesStore.recipes.length / itemsPerPage.value));
+
 const user_id = userStore.$state.userId;
-  console.log("✅ userId after mounted from the index page", user_id);
+console.log("✅ userId after mounted from the index page", user_id);
+
 const bookmarkStates = reactive({});
 const likeStates = reactive({});
-
 const bookMarkId = computed(() => bookmarkStore.bookmarkedId);
 const likedId = computed(() => likeStore.likeId);
 
+// Paginated recipes
+const paginatedRecipes = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return recipesStore.recipes.slice(start, end);
+});
+
 const handleSearch = async () => {
+  currentPage.value = 1; // Reset to first page on new search
   recipesStore.setSearchRecipe(searchQuery.value);
-  console.log("search item from the comp", searchQuery.value);
   await recipesStore.getAllRecipes(searchQuery.value);
 };
 
@@ -59,7 +71,6 @@ const handleRemoveBookmark = async (recipeId) => {
       toast.error("No bookmark ID found for deletion");
       return;
     }
-
     await bookmarkStore.removeBookmark(bookMarkId.value);
     toast.success("Bookmark removed successfully!");
     bookmarkStates[recipeId] = false;
@@ -106,6 +117,13 @@ const handleRemoveLike = async (recipeId) => {
   }
 };
 
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
 onMounted(async () => {
   console.log("Fetching all recipes...");
   try {
@@ -126,6 +144,12 @@ onMounted(async () => {
     console.error("Failed to load recipes", error);
   }
 });
+// In your script section
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString('en-US', options);
+};
 </script>
 
 <template>
@@ -145,7 +169,7 @@ onMounted(async () => {
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Recipe Card -->
       <div
-        v-for="recipe in recipesStore.recipes"
+        v-for="recipe in paginatedRecipes"
         :key="recipe.id"
         class="card bg-white border-2 border-green-100 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300"
       >
@@ -242,7 +266,28 @@ onMounted(async () => {
               ${{ recipe.price }}
             </span>
           </div>
+         
+       <div class="flex items-center mt-2">
+  <div class="w-8 h-8 rounded-full border-2 border-green-600 overflow-hidden mr-2">
+    <img 
+      :src="recipe.user?.profile || '/images/Sample_User_Icon.png'"
+      :alt="recipe.user?.username || 'User'"
+      class="w-full h-full object-cover"
+    />
+  </div>
+  <span class="text-sm text-green-700">
+    {{ recipe.user?.username || 'Anonymous' }}
+  </span>
 
+        <!-- Creation Date -->
+<div class="flex items-center text-sm text-gray-500 mt-2 ml-28">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+  {{ formatDate(recipe.created_at) }}
+</div>
+
+      </div>
           <!-- Category and Prep Time -->
           <div class="flex justify-between text-sm">
             <div class="flex items-center text-green-700">
@@ -256,6 +301,43 @@ onMounted(async () => {
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="flex justify-center mt-8" v-if="totalPages > 1">
+      <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+        <!-- Previous Button -->
+        <button
+          @click="changePage(currentPage - 1)"
+          :disabled="currentPage === 1"
+          class="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+
+        <!-- Page Numbers -->
+        <template v-for="page in totalPages" :key="page">
+          <button
+            @click="changePage(page)"
+            :class="{
+              'bg-green-600 text-white': currentPage === page,
+              'bg-white text-gray-700 hover:bg-green-50': currentPage !== page,
+            }"
+            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium"
+          >
+            {{ page }}
+          </button>
+        </template>
+
+        <!-- Next Button -->
+        <button
+          @click="changePage(currentPage + 1)"
+          :disabled="currentPage === totalPages"
+          class="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </nav>
     </div>
   </div>
 </template>
@@ -290,5 +372,10 @@ button, a {
 ::placeholder {
   color: #86efac;
   opacity: 1;
+}
+
+/* Pagination active state */
+.bg-green-600 {
+  z-index: 10;
 }
 </style>

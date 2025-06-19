@@ -8,7 +8,6 @@ export const useRatingStore = defineStore({
     rating: [],
     errorMessage: "",
     successmessage: "",
-
     processResultStatus: false,
   }),
   actions: {

@@ -130,7 +130,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-white shadow-sm">
+  <div class="bg-white">
     <!-- Hero Section -->
     <section ref="heroSection" class="relative bg-gray-900 text-white overflow-hidden">
       <!-- Background Image with Overlay -->
@@ -182,12 +182,12 @@ onMounted(() => {
     </section>
 
     <!-- Recipe Tabs Section -->
-    <section class="py-16 dark:bg-[#20161F]">
-      <div class="container mx-auto">
+    <section class="py-16 bg-white">
+      <div class="container mx-auto px-4">
         <!-- Tabs -->
-        <div class="tabs-container items-center justify-center mx-auto">
+        <div class="tabs-container flex items-center justify-center mx-auto">
           <div
-            class="tabs-box flex flex-wrap md:flex-row space-x-6 p-1 bg-gray-400 dark:bg-[#422f40] items-center justify-center w-full rounded-full font-poppins-italic"
+            class="tabs-box flex flex-wrap md:flex-row gap-2 p-1 bg-green-100 items-center justify-center w-full rounded-full font-poppins-italic"
           >
             <!-- All Tab -->
             <input
@@ -200,12 +200,10 @@ onMounted(() => {
             />
             <label
               for="all"
-              class="tab-label md:text-xl px-6 py-2 rounded-full dark:text-black bg-gray-400 dark:bg-[#422f40] text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              class="tab-label md:text-lg px-6 py-2 rounded-full cursor-pointer transition-all duration-300 ease-in-out"
               :class="{
-                'bg-white dark:bg-white dark:text-black text-gray-700 shadow-lg':
-                  selectedTab === 'all',
-                'bg-gray-400 text-gray-700 hover:bg-gray-200 hover:shadow-lg':
-                  selectedTab !== 'all',
+                'bg-green-600 text-white shadow-md': selectedTab === 'all',
+                'text-green-700 hover:bg-green-200': selectedTab !== 'all',
               }"
             >
               All
@@ -222,12 +220,10 @@ onMounted(() => {
             />
             <label
               for="breakfast"
-              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full bg-gray-400 dark:bg-[#422f40] text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              class="tab-label md:text-lg px-6 py-2 rounded-full cursor-pointer transition-all duration-300 ease-in-out"
               :class="{
-                'bg-white dark:bg-white text-gray-700 shadow-lg':
-                  selectedTab === 'breakfast',
-                'bg-gray-400 text-gray-700 hover:bg-gray-200 hover:shadow-lg':
-                  selectedTab !== 'breakfast',
+                'bg-green-600 text-white shadow-md': selectedTab === 'breakfast',
+                'text-green-700 hover:bg-green-200': selectedTab !== 'breakfast',
               }"
             >
               Breakfast
@@ -244,12 +240,10 @@ onMounted(() => {
             />
             <label
               for="lunch"
-              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              class="tab-label md:text-lg px-6 py-2 rounded-full cursor-pointer transition-all duration-300 ease-in-out"
               :class="{
-                'bg-white dark:bg-white text-gray-700 shadow-lg':
-                  selectedTab === 'lunch',
-                'bg-gray-400 text-gray-700 hover:bg-gray-200 hover:shadow-lg':
-                  selectedTab !== 'lunch',
+                'bg-green-600 text-white shadow-md': selectedTab === 'lunch',
+                'text-green-700 hover:bg-green-200': selectedTab !== 'lunch',
               }"
             >
               Lunch
@@ -266,15 +260,13 @@ onMounted(() => {
             />
             <label
               for="desserts"
-              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              class="tab-label md:text-lg px-6 py-2 rounded-full cursor-pointer transition-all duration-300 ease-in-out"
               :class="{
-                'bg-white dark:bg-white text-gray-700 shadow-lg':
-                  selectedTab === 'desserts',
-                'bg-gray-400 text-gray-700 hover:bg-gray-200 hover:shadow-lg':
-                  selectedTab !== 'desserts',
+                'bg-green-600 text-white shadow-md': selectedTab === 'desserts',
+                'text-green-700 hover:bg-green-200': selectedTab !== 'desserts',
               }"
             >
-              Desserts & Sweets
+              Desserts
             </label>
 
             <!-- Fasting Dishes Tab -->
@@ -288,15 +280,13 @@ onMounted(() => {
             />
             <label
               for="fasting"
-              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              class="tab-label md:text-lg px-6 py-2 rounded-full cursor-pointer transition-all duration-300 ease-in-out"
               :class="{
-                'bg-white dark:bg-white text-gray-700 shadow-lg':
-                  selectedTab === 'fasting',
-                'bg-gray-400  text-gray-700 hover:bg-gray-200 hover:shadow-lg':
-                  selectedTab !== 'fasting',
+                'bg-green-600 text-white shadow-md': selectedTab === 'fasting',
+                'text-green-700 hover:bg-green-200': selectedTab !== 'fasting',
               }"
             >
-              Fasting Dishes
+              Fasting
             </label>
 
             <!-- Non-Fasting Dishes Tab -->
@@ -310,17 +300,15 @@ onMounted(() => {
             />
             <label
               for="non-fasting"
-              class="tab-label md:text-xl px-6 py-2 dark:text-black rounded-full dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              class="tab-label md:text-lg px-6 py-2 rounded-full cursor-pointer transition-all duration-300 ease-in-out"
               :class="{
-                'bg-white dark:bg-white text-gray-700 shadow-lg':
-                  selectedTab === 'non-fasting',
-                'bg-gray-400 text-gray-700 hover:bg-gray-300 hover:shadow-lg':
-                  selectedTab !== 'non-fasting',
+                'bg-green-600 text-white shadow-md': selectedTab === 'non-fasting',
+                'text-green-700 hover:bg-green-200': selectedTab !== 'non-fasting',
               }"
             >
-              Non-Fasting Dishes
+              Vegetable
             </label>
-
+            
             <!-- Dinner Tab -->
             <input
               type="radio"
@@ -332,25 +320,25 @@ onMounted(() => {
             />
             <label
               for="dinner"
-              class="tab-label md:text-xl px-6 py-2 rounded-full dark:text-black dark:bg-[#422f40] bg-gray-400 text-gray-700 cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-200 hover:text-gray-700 hover:shadow-lg"
+              class="tab-label md:text-lg px-6 py-2 rounded-full cursor-pointer transition-all duration-300 ease-in-out"
               :class="{
-                'bg-white dark:bg-white text-gray-700 shadow-lg':
-                  selectedTab === 'dinner',
-                'bg-gray-400 text-gray-700 hover:bg-gray-300 hover:shadow-lg':
-                  selectedTab !== 'dinner',
+                'bg-green-600 text-white shadow-md': selectedTab === 'dinner',
+                'text-green-700 hover:bg-green-200': selectedTab !== 'dinner',
               }"
             >
               Dinner
             </label>
           </div>
         </div>
-        <div class="mb-6 mt-6 flex justify-center dark:bg-[#20161F]">
+        
+        <!-- Search Input -->
+        <div class="mb-6 mt-6 flex justify-center">
           <input
             @input="handleSearch"
             v-model="searchQuery"
             type="text"
-            placeholder="what are we cooking today?"
-            class="w-full sm:w-1/2 p-3 border-2 border-green-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-[#20161F]"
+            placeholder="What are we cooking today?"
+            class="w-full sm:w-1/2 p-3 border-2 border-green-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
           />
         </div>
 
@@ -362,99 +350,10 @@ onMounted(() => {
     </section>
 
     <!-- Kushan Cuisine Section -->
-    <section ref="feature1" class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-gray-900 mb-4">
-          Explore <span class="text-green-600">Kushan Recipe</span>
-        </h2>
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-          Discover the rich flavors of ancient Kushan Empire - where Central Asian, Indian, and Persian culinary traditions blend harmoniously.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Recipe Card 1 -->
-        <div ref="feature2" class="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:scale-105">
-          <img 
-            src="https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" 
-            alt="Kushan Dumplings"
-            class="w-full h-48 object-cover"
-          >
-          <div class="p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Kushan Mantu</h3>
-            <p class="text-gray-600 mb-4">Steamed dumplings filled with spiced lamb and onions, served with yogurt and mint oil.</p>
-            <div class="flex justify-between items-center">
-              <span class="text-green-600 font-medium">Difficulty: Medium</span>
-              <NuxtLink 
-                to="/recipes/" 
-                class="text-green-600 hover:text-green-700 font-medium"
-              >
-                View Recipe →
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe Card 2 -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:scale-105">
-          <img 
-            src="https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80" 
-            alt="Kushan Pilaf"
-            class="w-full h-48 object-cover"
-          >
-          <div class="p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Kushan Osh</h3>
-            <p class="text-gray-600 mb-4">Fragrant rice pilaf with lamb, carrots, and raisins - a royal dish from the Silk Road.</p>
-            <div class="flex justify-between items-center">
-              <span class="text-green-600 font-medium">Difficulty: Easy</span>
-              <NuxtLink 
-                to="/recipes/" 
-                class="text-green-600 hover:text-green-700 font-medium"
-              >
-                View Recipe →
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe Card 3 -->
-        <div ref="feature3" class="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:scale-105">
-          <img 
-            src="https://images.unsplash.com/photo-1565557623262-b51c2513a641?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1371&q=80" 
-            alt="Kushan Bread"
-            class="w-full h-48 object-cover"
-          >
-          <div class="p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Kushan Nan</h3>
-            <p class="text-gray-600 mb-4">Traditional tandoor-baked flatbread with sesame and nigella seeds.</p>
-            <div class="flex justify-between items-center">
-              <span class="text-green-600 font-medium">Difficulty: Simple</span>
-              <NuxtLink 
-                to="/recipes/" 
-                class="text-green-600 hover:text-green-700 font-medium"
-              >
-                View Recipe →
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="text-center mt-12">
-        <NuxtLink 
-          to="/recipes" 
-          class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-        >
-          Explore More Kushan Recipes
-          <svg class="ml-3 -mr-1 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </NuxtLink>
-      </div>
-    </section>
+   
 
     <!-- CTA Section -->
-    <section class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 text-center">
+    <section class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 text-center bg-white">
       <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-8 text-white">
         <h2 class="text-3xl font-bold mb-6">
           {{ isAuthenticated ? 'Ready to Share Your Next Creation?' : 'Join Our Vibrant Food Community' }}
@@ -468,34 +367,34 @@ onMounted(() => {
             }}
           </p>
           
-          <div class="flex flex-col sm:flex-row justify-center gap-4">
-            <NuxtLink 
-              to="/recipes"
-              class="px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-gray-100"
-            >
-              Browse Recipes
-            </NuxtLink>
-            
-            <NuxtLink 
-              v-if="!isAuthenticated"
-              to="/auth" 
-              class="px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-700 hover:bg-green-800"
-            >
-              Join Now - It's Free!
-            </NuxtLink>
-            
-            <NuxtLink 
-              v-else
-              to="/recipes/create" 
-              class="px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-700 hover:bg-green-800"
-            >
-              Create New Recipe
-            </NuxtLink>
-          </div>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <NuxtLink 
+            to="/recipes"
+            class="px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-green-600 bg-white hover:bg-gray-100"
+          >
+            Browse Recipes
+          </NuxtLink>
+          
+          <NuxtLink 
+            v-if="!isAuthenticated"
+            to="/auth" 
+            class="px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-700 hover:bg-green-800"
+          >
+            Join Now - It's Free!
+          </NuxtLink>
+          
+          <NuxtLink 
+            v-else
+            to="/recipes/create" 
+            class="px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-700 hover:bg-green-800"
+          >
+            Create New Recipe
+          </NuxtLink>
         </div>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
+</div>
 </template>
 
 <style scoped>
@@ -509,27 +408,27 @@ onMounted(() => {
   font-style: italic;
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  /* Adjust for small screens */
-  section[ref="heroSection"] {
-    background-size: contain;
-    background-repeat: no-repeat;
-  }
-  
   .tabs-box {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.5rem;
+    padding: 0.5rem;
   }
   
   .tab-label {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  input[type="text"] {
     width: 100%;
-    text-align: center;
   }
 }
 
-/* Hide scrollbar */
-::-webkit-scrollbar {
-  display: none;
+/* Ensure no horizontal scroll */
+html, body {
+  overflow-x: hidden;
 }
 </style>

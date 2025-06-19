@@ -23,8 +23,10 @@ query allRecipes($limit: Int!, $offset: Int!, $searchQuery: String) {
     servings
     price
     title
+    created_at
     user {
       username
+      profile
     }
     likes {
       id

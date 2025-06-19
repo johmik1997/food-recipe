@@ -447,62 +447,61 @@ const closeModal = () => {
                 <!-- Visitor Actions -->
                 <div v-else class="flex flex-row md:pt-4 gap-2 md:gap-4 lg:gap-5 items-center">
                   <!-- Rating Button -->
-                  <div class="">
-                    <button class="flex flex-col items-center justify-center" @click="openModal">
-                      <img src="/icons/rating-svgrepo-com.svg" class="h-8 w-8" alt=""/>
-                      <span class="text-xs text-yellow-500 hidden md:block">rate</span>
-                      <div class="rating">
-  <input type="radio" name="rating-2" value="1" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
-  <input type="radio" name="rating-2" value="2" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
-  <input type="radio" name="rating-2" value="3" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
-  <input type="radio" name="rating-2" value="4" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
-  <input type="radio" name="rating-2" value="5" class="mask mask-star-2 bg-yellow-400" v-model="rating" />
+                 <div class="relative">
+  <!-- Rating Trigger Button -->
+  <button
+    class="flex flex-col items-center justify-center hover:scale-105 transition"
+    @click="openModal"
+    aria-label="Rate this recipe"
+  >
+    <img src="/icons/rating-svgrepo-com.svg" class="h-8 w-8" alt="Rate icon" />
+    <span class="text-xs text-yellow-500 hidden md:block">Rate</span>
+  </button>
+
+  <!-- Rating Modal -->
+  <dialog ref="modalRef" id="rating_modal" class="modal">
+    <div class="modal-box bg-white dark:bg-[#1a1a1a] rounded-lg shadow-md">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-green-800 dark:text-green-300">Rate this Recipe</h3>
+        <button
+          class="btn btn-sm btn-circle btn-ghost text-green-600 dark:text-green-300"
+          @click="closeModal"
+          aria-label="Close rating modal"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Rating Stars -->
+      <div class="flex justify-center mb-6">
+        <div class="rating space-x-1">
+          <template v-for="star in 5" :key="star">
+            <input
+              type="radio"
+              :value="star"
+              v-model="rating"
+              class="mask mask-star-2 bg-green-400"
+              :aria-label="`${star} star`"
+              :checked="rating === star"
+              name="rating"
+            />
+          </template>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="flex justify-end">
+        <button
+          @click.prevent="handleRating"
+          class="bg-green-100 ring-1 ring-green-500 py-2 px-4 rounded-full hover:bg-green-300 text-green-700"
+        >
+          Submit
+        </button>
+      </div>
+    </div>
+  </dialog>
 </div>
-
-                    </button>
-                    <!-- Rating Modal -->
-                    <dialog ref="modalRef" id="my_modal_1" class="modal">
-                      <div class="modal-box bg-white">
-                        <!-- Close button -->
-                        <form method="dialog">
-                          <button
-                            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 text-green-600"
-                            @click="closeModal"
-                          >
-                            ✕
-                          </button>
-                        </form>
-
-                        <!-- Modal title -->
-                        <h3 class="text-lg font-bold text-green-800">Rate this Recipe</h3>
-
-                        <!-- Rating input -->
-                        <div class="py-4 items-center">
-                          <div class="rating">
-                            <input
-                              type="radio"
-                              name="rating-2"
-                              class="mask mask-star-2 bg-green-400"
-                              value="1"
-                              v-model="rating"
-                              aria-label="1 star"
-                            />
-                            <!-- ... other rating inputs ... -->
-                          </div>
-                        </div>
-
-                        <!-- Submit button -->
-                        <div class="flex justify-end mt-2">
-                          <button
-                            @click.prevent="handleRating"
-                            class="bg-green-100 ring-1 ring-green-500 py-2 px-4 rounded-full hover:bg-green-300 text-green-700"
-                          >
-                            Submit
-                          </button>
-                        </div>
-                      </div>
-                    </dialog>
-                  </div>
 
                   <!-- Like/Unlike Button -->
                   <div>

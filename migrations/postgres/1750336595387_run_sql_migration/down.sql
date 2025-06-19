@@ -1,0 +1,23 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- CREATE OR REPLACE FUNCTION update_average_rating()
+-- RETURNS TRIGGER AS $$
+-- BEGIN
+--   UPDATE recipes
+--   SET average_rating = (
+--     SELECT AVG(rating)::NUMERIC(3,2)
+--     FROM ratings
+--     WHERE ratings.recipe_id = NEW.recipe_id
+--   )
+--   WHERE id = NEW.recipe_id;
+--
+--   RETURN NEW;
+-- END;
+-- $$ LANGUAGE plpgsql;
+--
+-- DROP TRIGGER IF EXISTS trg_update_avg_rating ON ratings;
+--
+-- CREATE TRIGGER trg_update_avg_rating
+-- AFTER INSERT ON ratings
+-- FOR EACH ROW
+-- EXECUTE FUNCTION update_average_rating();

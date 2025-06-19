@@ -18,7 +18,7 @@ const router = useRouter();
 const token = ref("");
 const userId = ref("");
 const route = useRoute();
-const useAuthStore = authStore();
+const auth = authStore();
 
 const formError = ref({
   password: "",
@@ -74,11 +74,11 @@ const handlePasswordReset = async (value) => {
   value.userId = Number(userId.value);
   if (!isNaN(value.userId)) {
     console.log("the value:", value);
-    const result = await useAuthStore.resetPassword(value);
+    const result = await auth.resetPassword(value);
     if (result == true) {
-      if (useAuthStore.$state.successMessage) {
-        const message = useAuthStore.$state.successMessage;
-        useAuthStore.setSuccessMessage("");
+      if (auth.$state.successMessage) {
+        const message = auth.$state.successMessage;
+        auth.setSuccessMessage("");
         toast.success(message);
       } else {
         toast.success(
@@ -121,7 +121,7 @@ onMounted(() => {
         <h1
           class="animated-text text-7xl font-bold bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-600"
         >
-          Welcome to My cookit!
+          Welcome to Kushna!
         </h1>
         <p
           class="animated-text text-4xl font-semibold bg-clip-text bg-gradient-to-r from-green-400 to-blue-500"
@@ -192,7 +192,7 @@ onMounted(() => {
               <button
                 class="bg-cyan-200 border-2 rounded-full px-6 py-2 hover:bg-cyan-600"
               >
-                <span v-if="useAuthStore.$state.onLoad == false">
+                <span v-if="auth.$state.onLoad == false">
                   Update Password
                 </span>
                 <div

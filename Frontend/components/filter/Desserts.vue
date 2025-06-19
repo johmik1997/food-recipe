@@ -8,7 +8,6 @@ const recipesStore = useRecipeStore();
 const bookmarkStore = useBookmarkStore();
 
 const carouselRef = ref(null);
-const searchQuery = ref("");
 const userStore = authStore();
 const user_id = userStore.$state.userId;
 
@@ -23,7 +22,7 @@ const handleCheckBookmark = async (recipeId) => {
       user_id,
     };
     await bookmarkStore.checkIfBookmarked(payload);
-    bookmarkStates[recipeId] = bookmarkStore.$state.isBookmarked;
+    bookmarkStates[recipeId] = bookmarkStore.$state.isBookmarked; 
   } catch (error) {
     console.error("Error checking bookmark status:", error);
   }
@@ -62,20 +61,12 @@ const handleRemoveBookmark = async (recipeId) => {
 
 onMounted(async () => {
   try {
-    // Fetch categories
-    // await recipesStore.getCategories();
-    // categories.value = recipesStore.categories;
-    // console.log("all categories", JSON.stringify(categories.value, null, 2));
     await recipesStore.getAllRecipes();
     recipesStore.recipes.forEach((recipe) => {
       bookmarkStates[recipe.id] = false;
       handleCheckBookmark(recipe.id);
     });
-    await recipesStore.filterByCategory("Desserts & Sweets");
-    console.log(
-      "filtered recipes",
-      JSON.stringify(recipesStore.recipes, null, 2)
-    );
+    await recipesStore.filterByCategory("Dessert");
   } catch (error) {
     console.error("Failed to load or filter categories", error);
   }
@@ -97,10 +88,8 @@ const scrollCarousel = (direction) => {
 <template>
   <div>
     <div v-if="recipesStore.recipes.length === 0">
-      <div class="flex flex-col items-center gap-4 p-6">
-        <h1
-          class="text-center font-poppins-italic text-2xl md:text-4xl font-bold text-gray-800 dark:text-gray-100"
-        >
+      <div class="flex flex-col items-center gap-4 p-6 bg-white">
+        <h1 class="text-center font-poppins-italic text-2xl md:text-4xl font-bold text-green-800">
           No Desserts & Sweets recipes found, be the first to create one!
         </h1>
         <NuxtLink to="/recipes/create" class="relative group cursor-pointer">
@@ -110,18 +99,19 @@ const scrollCarousel = (direction) => {
             class="h-[300px] w-[300px] transition-transform duration-300 group-hover:scale-105"
           />
           <div
-            class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            class="absolute inset-0 bg-pink-500 bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           >
             <span class="text-white font-bold text-lg">Create Recipe</span>
           </div>
         </NuxtLink>
       </div>
     </div>
-    <div v-else class="relative font-poppins dark:bg-[#20161F]">
+
+    <div v-else class="relative font-poppins bg-white">
       <!-- Left Chevron Button -->
       <button
         @click="scrollCarousel('left')"
-        class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-colors duration-200 z-10"
+        class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-pink-500 text-white p-3 rounded-full shadow-lg hover:bg-pink-600 transition-colors duration-200 z-10"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -142,41 +132,33 @@ const scrollCarousel = (direction) => {
       <!-- Carousel Container -->
       <div
         ref="carouselRef"
-        class="flex overflow-x-auto scroll-smooth snap-x snap-mandatory gap-6 p-4 transition-transform duration-1000 ease-in-out dark:bg-[#20161F]"
+        class="flex overflow-x-auto scroll-smooth snap-x snap-mandatory gap-6 p-4 transition-transform duration-1000 ease-in-out bg-white"
         style="scrollbar-width: none; -ms-overflow-style: none"
       >
         <div
           v-for="recipe in recipesStore.recipes"
           :key="recipe.id"
-          class="card bg-base-100 dark:bg-[#20161F] w-96 border-2 transition-shadow duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden flex-shrink-0 snap-center"
+          class="flex flex-col bg-white w-96 border-2 border-pink-100 rounded-xl overflow-hidden flex-shrink-0 snap-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
         >
-          <figure class="relative">
+          <figure class="relative h-60 overflow-hidden">
             <img
-              :src="
-                recipe.featured_image ||
-                'https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.webp'
-              "
+              :src="recipe.featured_image || 'https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.webp'"
               alt="Recipe Image"
-              class="w-full h-60 object-cover transition-transform duration-300 hover:scale-105"
+              class="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
             />
             <!-- Save Icon -->
             <button
               v-if="useAuthStore.$state.userId"
-              @click.stop="
-                bookmarkStates[recipe.id]
-                  ? handleRemoveBookmark(recipe.id)
-                  : handlesaveBookmark(recipe.id)
-              "
-              class="absolute bottom-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white/90 transition-colors duration-200 backdrop-blur-sm"
+              @click.stop="bookmarkStates[recipe.id] ? handleRemoveBookmark(recipe.id) : handlesaveBookmark(recipe.id)"
+              class="absolute bottom-4 right-4 p-2 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-md"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-6 w-6"
                 :class="{
-                  'text-green-500': bookmarkStates[recipe.id],
-                  'text-green-300': !bookmarkStates[recipe.id],
+                  'text-pink-500 fill-pink-500': bookmarkStates[recipe.id],
+                  'text-pink-300': !bookmarkStates[recipe.id],
                 }"
-                fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
@@ -190,64 +172,45 @@ const scrollCarousel = (direction) => {
             </button>
           </figure>
 
-          <div class="card-body p-6">
-            <NuxtLink :to="`/recipes/${recipe.id}`">
-              <div
-                class="flex flex-row justify-between items-center dark:text-[#C9CF43]"
-              >
-                <h2
-                  class="card-title text-lg font-bold text-green-900 dark:text-[#C9CF43]"
-                >
-                  {{ recipe.title || "Untitled Recipe" }}
-                </h2>
-                <!-- <h1 class="font-bold text-2xl text-green-700 dark:text-[#C9CF43]">
-                  $ {{ recipe.price }}
-                </h1> -->
-              </div>
+          <div class="p-6 flex flex-col flex-1">
+            <NuxtLink :to="`/recipes/${recipe.id}`" class="group">
+              <h2 class="text-xl font-bold text-pink-800 mb-2 group-hover:text-pink-600 transition-colors">
+                {{ recipe.title || "Untitled Recipe" }}
+              </h2>
             </NuxtLink>
 
-            <div class="flex flex-row justify-between">
-              <div class="flex items-center mt-2">
-                <span
-                  v-for="star in 5"
-                  :key="star"
-                  class="text-2xl"
-                  :class="{
-                    'text-green-500 dark:text-[#C9CF43]':
-                      star <= Math.round(recipe.average_rating),
-                    'text-green-200': star > Math.round(recipe.average_rating),
-                  }"
-                >
-                  ★
+            <div class="flex justify-between items-center mt-2">
+              <div class="flex items-center">
+                <div class="flex mr-2">
+                  <span
+                    v-for="star in 5"
+                    :key="star"
+                    class="text-xl"
+                    :class="{
+                      'text-yellow-500': star <= Math.round(recipe.average_rating),
+                      'text-pink-100': star > Math.round(recipe.average_rating),
+                    }"
+                  >
+                    ★
+                  </span>
+                </div>
+                <span class="text-pink-700 font-medium text-sm">
+                  ({{ recipe.ratings_aggregate.aggregate.count }})
                 </span>
-                <span class="font-bold"
-                  >({{ recipe.ratings_aggregate.aggregate.count }})</span
-                >
               </div>
-              <!-- <button class="py-1 px-4 r dark:bg-[#C9CF43]">
-                <img
-                  src="/icons/cart-large-svgrepo-com.svg"
-                  alt=""
-                  class="w-12 h-12"
-                />
-              </button> -->
-              <h1 class="font-bold text-2xl text-green-700 dark:text-[#C9CF43]">
-                $ {{ recipe.price }}
-              </h1>
+              <span class="font-bold text-pink-600 text-xl">
+                ${{ recipe.price }}
+              </span>
             </div>
-            <!-- Category Badge and Preparation Time -->
-            <div class="flex flex-row justify-between items-center mr-4">
-              <div class="flex flex-row gap-8 mt-4 justify-between">
-                <div class="text-sm font-semibold dark:text-gray-300">
-                  <span></span>
-                  {{ recipe.catagory?.name || "Uncategorized" }}
-                </div>
-                <div class="text-sm font-semibold dark:text-gray-300">
-                  <h1>
-                    {{ recipe.prep_time || "Uncategorized" }} mins
-                  </h1>
-                </div>
-              </div>
+            
+            <!-- Category and Prep Time -->
+            <div class="flex justify-between items-center mt-4">
+              <span class="text-pink-700 bg-pink-100 px-3 py-1 rounded-full text-sm font-medium">
+                {{ recipe.catagory?.name || "Uncategorized" }}
+              </span>
+              <span class="text-pink-700 text-sm font-medium">
+                {{ recipe.prep_time || "0" }} mins
+              </span>
             </div>
           </div>
         </div>
@@ -256,7 +219,7 @@ const scrollCarousel = (direction) => {
       <!-- Right Chevron Button -->
       <button
         @click="scrollCarousel('right')"
-        class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-colors duration-200 z-10"
+        class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-pink-500 text-white p-3 rounded-full shadow-lg hover:bg-pink-600 transition-colors duration-200 z-10"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -291,5 +254,14 @@ const scrollCarousel = (direction) => {
 /* Hide scrollbar */
 ::-webkit-scrollbar {
   display: none;
+}
+
+/* Smooth card hover effect */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(236, 72, 153, 0.1);
 }
 </style>

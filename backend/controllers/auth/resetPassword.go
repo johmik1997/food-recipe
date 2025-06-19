@@ -117,7 +117,7 @@ func ResetPassword() gin.HandlerFunc {
 		}
 		log.Printf("User %d successfully updated with tokenId %d", user.ID, UpdateUserTokenMutation.UpdatedUser.TokenID)
 
-		verificationLink := os.Getenv("RESET_PASS_URL") + "/password-reset?token=" + token + "&id=" + strconv.Itoa(int(user.ID))
+		verificationLink := os.Getenv("RESET_PASS_URL") + "/Password-reset?token=" + token + "&id=" + strconv.Itoa(int(user.ID))
 
 		// Send password reset email
 		emailData := helpers.EmailData{

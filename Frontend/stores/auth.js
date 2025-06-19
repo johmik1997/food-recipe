@@ -18,7 +18,7 @@ export const authStore = defineStore(
       isAdmin: false,
       isAuthed: false,
       authPages: ["AuthPage"],
-      anonymousPages: ["index", "Password-reset", "Verify", "Welcome", "Auth"],
+      anonymousPages: ["index", "Password-reset", "Verify", "Welcome", "Auth","recipes"],
       protectedPages: ["profile"],
       adminPages: ["admin-dashboard", "admin-users-id"],
       role: "",

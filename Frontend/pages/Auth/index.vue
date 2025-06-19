@@ -39,21 +39,21 @@ function animateText() {
   <div class="flex h-screen w-full">
     <!-- Left Section: Animated Text -->
     <div
-      class="relative flex-1 hidden w-0 lg:flex items-center justify-center bg-gradient-to-r from-purple-600 via-green-200 to-indigo-400 dark:bg-gradient-to-r dark:from-[#20161F] dark:via-[#2A1C23] dark:to-[#1A0E14]"
+      class="relative flex-1 hidden w-0 lg:flex items-center justify-center bg-gradient-to-r from-teal-500 via-blue-400 to-indigo-500"
     >
-      <div class="text-center space-y-6">
+      <div class="text-center space-y-6 px-8">
         <h1
-          class="animated-text text-7xl font-bold bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-600"
+          class="animated-text text-7xl font-bold bg-clip-text bg-gradient-to-r from-white to-amber-200"
         >
-          Welcome to cookit!
+          Welcome to Kushna!
         </h1>
         <p
-          class="animated-text text-4xl font-semibold bg-clip-text bg-gradient-to-r from-green-400 to-blue-500"
+          class="animated-text text-4xl font-semibold bg-clip-text bg-gradient-to-r from-amber-100 to-white"
         >
           {{
             showSignup
-              ? "Join our community today."
-              : "Sign in to continue your journey."
+              ? "Join our culinary community"
+              : "Sign in to continue cooking"
           }}
         </p>
       </div>
@@ -61,26 +61,24 @@ function animateText() {
 
     <!-- Right Section: Form -->
     <div
-      class="flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 flex-1 dark:bg-[#20161F]"
+      class="flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 flex-1 bg-white"
     >
       <!-- Form Toggle Button and Conditional Heading -->
       <div
         class="flex flex-row gap-4 pt-20 sm:items-center sm:justify-center lg:items-start lg:justify-start"
       >
-        <h2
-          class="text-center border-b-2 border-black dark:text-gray-200 dark:border-gray-200"
-        >
+        <h2 class="text-center border-b-2 border-teal-500 text-gray-700">
           {{
             showSignup
               ? "Already have an account?"
-              : "You haven't signed up yet?"
+              : "New to Kushna?"
           }}
         </h2>
         <button
           @click="toggleForm"
-          class="text-cyan-400 p-2 rounded-full hover:text-cyan-900"
+          class="text-teal-600 font-medium hover:text-teal-800 transition-colors"
         >
-          {{ showSignup ? "Login" : "Signup" }}
+          {{ showSignup ? "Login" : "Sign Up" }}
         </button>
       </div>
 
@@ -103,5 +101,11 @@ function animateText() {
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Smooth background transition */
+.bg-gradient-to-r {
+  transition: background 0.5s ease;
 }
 </style>
